@@ -1,9 +1,9 @@
 [submodule "S5fork"]
-	path = S5fork
+	path = nested_repos/S5fork
 	url = https://github.com/stevenabreu7/S5.git
 	branch = main
 [submodule "aqt"]
-	path = aqt
+	path = nested_repos/aqt
 	url = https://github.com/stevenabreu7/aqt.git
 	branch = main
 [submodule "dysts"]
