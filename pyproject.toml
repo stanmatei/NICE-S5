@@ -1,0 +1,35 @@
+[project]
+name = "aqtp"
+authors = [{name = "Lukasz Lew", email = "lew@google.com"}]
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dynamic = ["version", "description"]
+requires-python = ">=3.10"
+
+dependencies = [
+  "absl-py",
+  "jax",
+  "jaxlib",
+  "flax",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+
+[project.urls]
+Source = "https://github.com/google/aqt"
+
+[tool.flit.module]
+name = "aqt"
