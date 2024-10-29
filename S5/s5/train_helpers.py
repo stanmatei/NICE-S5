@@ -401,7 +401,7 @@ def train_epoch(state, rng, model, trainloader, seq_len, in_dim, batchnorm, lr_p
     return state, np.mean(np.array(batch_losses)), step
 
 
-def validate(state, skey, model, testloader, seq_len, in_dim, batchnorm=False, 
+def validate(state, skey, model, testloader, seq_len, in_dim, batchnorm, 
              loss_fn=cross_entropy_loss, calculate_acc=True, step_rescale=1.0):
     """Validation function that loops over batches"""
     model = model(training=False, step_rescale=step_rescale)

@@ -196,6 +196,7 @@ def train(args):
         if valloader is not None:
             print(f"[*] Running Epoch {epoch + 1} Validation...")
             val_loss, val_acc = validate(state,
+                                         skey,
                                          model_cls,
                                          valloader,
                                          seq_len,
@@ -204,6 +205,7 @@ def train(args):
 
             print(f"[*] Running Epoch {epoch + 1} Test...")
             test_loss, test_acc = validate(state,
+                                           skey,
                                            model_cls,
                                            testloader,
                                            seq_len,
