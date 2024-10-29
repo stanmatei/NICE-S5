@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append("../S5fork")
+sys.path.append("../S5")
 
 import jax
 

@@ -2,8 +2,7 @@ import argparse
 import sys
 import pathlib
 
-sys.path.append("../S5fork")
-# sys.path.append("../../S5")
+sys.path.append("../S5")
 
 import jax
 import jax.numpy as jnp
@@ -53,7 +52,8 @@ def run(args):
 
 
         # modify this to be a loop over the various tau values and their directories.
-        data_path = pathlib.Path(__file__).parent / "dynamical" / "data" / "MackeyGlass" / f"{args.tau}"
+        data_path = pathlib.Path(__file__).parent / "dynamical" / "data" / "MackeyGlass" / f"tau_{args.tau}"
+        print(data_path)
         (
             trainloader,
             valloader,
@@ -106,6 +106,7 @@ if __name__ == "__main__":
     parser.add_argument("--ssm_act_bits", type=int_or_none, default=None)
     parser.add_argument("--non_ssm_bits", type=int_or_none, default=None)
     parser.add_argument("--non_ssm_act_bits", type=int_or_none, default=None)
+    parser.add_argument("--shift-add-a", type=bool, default=False)
 
     # Dataset flags
     parser.add_argument(
