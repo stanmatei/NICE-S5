@@ -8,4 +8,4 @@
 	branch = main
 [submodule "dysts"]
 	path = dysts
-	url = git@github.com:jegp/dysts
+	url = https://github.com/jegp/dysts.git
