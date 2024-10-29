@@ -11,6 +11,7 @@ import jax
 import jax.numpy as jnp
 from .utils.quantization import q_dot_maybe, q_had_maybe
 from .utils import shift_add_utils as sa_utils 
+from jax.tree_util import partial
 
 
 def make_ste(f):
