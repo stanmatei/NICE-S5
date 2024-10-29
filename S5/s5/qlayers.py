@@ -11,7 +11,6 @@ import jax
 import jax.numpy as jnp
 from .utils.quantization import q_dot_maybe, q_had_maybe
 from .utils import shift_add_utils as sa_utils 
-from jax.tree_util import partial
 
 
 def make_ste(f):
@@ -22,8 +21,8 @@ def make_ste(f):
     return ste_foo
     
 
-sign_clip = partial(jnp.clip, min=-1, max=1)
-shift_clip = partial(jnp.clip, min=-14, max=0)
+sign_clip = Partial(jnp.clip, min=-1, max=1)
+shift_clip = Partial(jnp.clip, min=-14, max=0)
 
 sign_clip_ste = make_ste(sign_clip)
 shift_clip_ste = make_ste(shift_clip)
