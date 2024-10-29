@@ -21,8 +21,8 @@ def make_ste(f):
     return ste_foo
     
 
-sign_clip = Partial(jnp.clip, min=-1, max=1)
-shift_clip = Partial(jnp.clip, min=-14, max=0)
+sign_clip = jax.tree_util.Partial(jnp.clip, min=-1, max=1)
+shift_clip = jax.tree_util.Partial(jnp.clip, min=-14, max=0)
 
 sign_clip_ste = make_ste(sign_clip)
 shift_clip_ste = make_ste(shift_clip)
