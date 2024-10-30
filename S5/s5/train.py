@@ -223,6 +223,7 @@ def train(args):
             # else use test set as validation set (e.g. IMDB)
             print(f"[*] Running Epoch {epoch + 1} Test...")
             val_loss, val_acc = validate(state,
+                                        skey,
                                          model_cls,
                                          testloader,
                                          seq_len,
@@ -256,6 +257,7 @@ def train(args):
                 # Evaluate on resolution 2 val and test sets
                 print(f"[*] Running Epoch {epoch + 1} Res 2 Validation...")
                 val2_loss, val2_acc = validate(state,
+                                               skey, 
                                                model_cls,
                                                aux_dataloaders['valloader2'],
                                                int(seq_len // 2),

@@ -5,7 +5,6 @@ from flax import linen as nn
 from jax.nn.initializers import lecun_normal, normal
 
 from .ssm_init import init_CV, init_VinvB, init_log_steps, trunc_standard_normal
-from .qlayers import ShiftLinearLayer
 
 
 # Discretization functions
@@ -211,8 +210,8 @@ class S5SSM(nn.Module):
                 self.C_tilde = self.C[..., 0] + 1j * self.C[..., 1]
 
         # Initialize feedthrough (D) matrix
-        # self.D = self.param("D", normal(stddev=1.0), (self.H,))
-        self.D = ShiftLinearLayer()
+        self.D = self.param("D", normal(stddev=1.0), (self.H,))
+        #self.D = ShiftLinearLayer()
 
         # Initialize learnable discretization timescale value
         self.log_step = self.param("log_step",
@@ -245,8 +244,7 @@ class S5SSM(nn.Module):
                        self.bidirectional)
 
         # Add feedthrough matrix output Du;
-        # Du = jax.vmap(lambda u: self.D(u))(input_sequence)
-        Du = self.D(input_sequence) # u = (b)
+         Du = jax.vmap(lambda u: self.D(u))(input_sequence)
         return ys + Du
 
 
