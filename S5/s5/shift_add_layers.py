@@ -19,8 +19,56 @@ def make_ste(f):
         return f(*args), lambda g: [g * arg_i for arg_i in args]
     
     return ste_foo
-    
 
+round_power_of_2_ste = make_ste(jax.tree_util.Partial(sa_util.round_power_of_2, min = -14, max = 0))
+round_to_fixed_ste = make_ste(jax.tree_util.Partial(sa_util.round_to_fixed, fraction=16, integer=16))
+    
+class ShiftLinearLayer(nn.Module):
+  weight: jax.Array = None
+  hadamard: bool = False
+  out_dim: int = 0
+  bias: bool = False
+  fraction_bits: int = 16
+  integer_bits: int = 16
+  
+  @nn.compact
+  def __call__(self, x):
+
+    if self.weight is not None:
+      w = self.weight
+    elif self.hadamard:
+      w = self.param('w', nn.initializers.zeros, (x.shape[-1],))
+    elif self.out_dim != 0:
+      w = self.param('w', nn.initializers.lecun_normal(), (x.shape[-1], self.out_dim))
+    else:
+      w = self.param('w', nn.initializers.lecun_normal(), (x.shape[-1], x.shape[-1]))
+
+    if self.bias:
+      b = self.param('b', nn.initializers.zeros, (x.shape[-1]))
+    else:
+      b = None
+
+    w_imag_rounded = round_power_of_2_ste(jnp.imag(w))
+    w_real_rounded = round_power_of_2_ste(jnp.real(w))
+    w_rounded = w_real_rounded + 1j * w_imag_rounded
+
+    x_imag_rounded = round_to_fixed_ste(jnp.imag(x))
+    x_real_rounded = round_to_fixed_ste(jnp.real(x))
+    x_rounded =  x_real_rounded + 1j * x_imag_rounded
+
+    if self.hadamard:
+      x = x_rounded * w_rounded
+    else:
+      x = jnp.matmul(x_rounded, w_rounded)
+
+    if b is not None:
+      b_rounded = round_to_fixed_ste(b)
+      x = x + b_rounded
+
+    return x
+
+
+"""
 sign_clip = jax.tree_util.Partial(jnp.clip, min=-1, max=1)
 shift_clip = jax.tree_util.Partial(jnp.clip, min=-14, max=0)
 
@@ -65,6 +113,7 @@ class ShiftLinearLayer(nn.Module):
         sign_rounded = round_ste(sign_clip_ste(sign))
         return shift_linear_func(x, shift_rounded, sign_rounded, bias)
         
+"""
 
 
 """

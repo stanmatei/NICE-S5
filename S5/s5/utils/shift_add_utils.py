@@ -6,8 +6,8 @@ def round_to_fixed(input, fraction=16, integer=16):
     assert integer >= 1, integer
     if integer == 1:
         return jnp.sign(input) - 1
-    delta = jnp.pow(2.0, -(fraction))
-    bound = jnp.pow(2.0, integer-1)
+    delta = jnp.power(2.0, -(fraction))
+    bound = jnp.power(2.0, integer-1)
     min_val = - bound
     max_val = bound - 1
     rounded = jnp.floor(input / delta) * delta
@@ -22,20 +22,12 @@ def get_shift_and_sign(x, rounding='deterministic'):
 
     return shift, sign
 
-def get_shift_and_sign(x, rounding='deterministic'):
-    sign = jnp.sign(x)
-
-    x_abs = jnp.abs(x)
-    shift = round(jnp.log(x_abs) / jnp.log(2), rounding)
-
-    return shift, sign
-
-def round_power_of_2(x, rounding='deterministic'):
+def round_power_of_2(x, rounding='deterministic', min = -14, max = 0):
     shift, sign = get_shift_and_sign(x, rounding)
     # print(shift)
+    shift = jnp.clip(shift, min, max)
     x_rounded = (2.0 ** shift) * sign
     return x_rounded
-
 
 def round(x, rounding='deterministic'):
     assert(rounding in ['deterministic', 'stochastic'])
