@@ -10,8 +10,7 @@ import aqt.jax.v2.flax.aqt_flax as aqt
 import jax
 import jax.numpy as jnp
 from .utils.quantization import q_dot_maybe, q_had_maybe
-import utils.shift_add_utils as sa_utils 
-
+from .utils.shift_add_utils import round_power_of_2, round_to_fixed
 
 def make_ste(f):
     @jax.custom_gradient
@@ -20,8 +19,8 @@ def make_ste(f):
     
     return ste_foo
 
-round_power_of_2_ste = make_ste(jax.tree_util.Partial(sa_util.round_power_of_2, min = -14, max = 0))
-round_to_fixed_ste = make_ste(jax.tree_util.Partial(sa_util.round_to_fixed, fraction=16, integer=16))
+round_power_of_2_ste = make_ste(jax.tree_util.Partial(round_power_of_2, min = -14, max = 0))
+round_to_fixed_ste = make_ste(jax.tree_util.Partial(round_to_fixed, fraction=16, integer=16))
     
 class ShiftLinearLayer(nn.Module):
   weight: jax.Array = None
