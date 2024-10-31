@@ -5,7 +5,7 @@ from flax import linen as nn
 from jax.nn.initializers import lecun_normal, normal
 
 from .ssm_init import init_CV, init_VinvB, init_log_steps, trunc_standard_normal
-from .qlayers import ShiftLinearLayer
+from .shift_add_layers import ShiftLinearLayer
 
 
 # Discretization functions
@@ -56,6 +56,36 @@ def binary_operator(q_i, q_j):
     A_i, b_i = q_i
     A_j, b_j = q_j
     return A_j * A_i, A_j * b_i + b_j
+
+def apply_shift_add_ssm(Lambda_bar, B_bar, C_tilde, C_shift, input_sequence, conj_sym, bidirectional):
+    """ Compute the LxH output of discretized SSM given an LxH input.
+        Args:
+            Lambda_bar (complex64): discretized diagonal state matrix    (P,)
+            B_bar      (complex64): discretized input matrix             (P, H)
+            C_tilde    (complex64): output matrix                        (H, P)
+            input_sequence (float32): input sequence of features         (L, H)
+            conj_sym (bool):         whether conjugate symmetry is enforced
+            bidirectional (bool):    whether bidirectional setup is used,
+                                  Note for this case C_tilde will have 2P cols
+        Returns:
+            ys (float32): the SSM outputs (S5 layer preactivations)      (L, H)
+    """
+    Lambda_elements = Lambda_bar * np.ones((input_sequence.shape[0],
+                                            Lambda_bar.shape[0]))
+    Bu_elements = jax.vmap(lambda u: B_bar @ u)(input_sequence)
+
+    _, xs = jax.lax.associative_scan(binary_operator, (Lambda_elements, Bu_elements))
+
+    if bidirectional:
+        _, xs2 = jax.lax.associative_scan(binary_operator,
+                                          (Lambda_elements, Bu_elements),
+                                          reverse=True)
+        xs = np.concatenate((xs, xs2), axis=-1)
+
+    if conj_sym:
+        return jax.vmap(lambda x: C_shift(x).real)(xs)
+    else:
+        return jax.vmap(lambda x: C_shift(x).real)(xs)
 
 
 def apply_ssm(Lambda_bar, B_bar, C_tilde, input_sequence, conj_sym, bidirectional):
@@ -212,7 +242,7 @@ class S5SSM(nn.Module):
 
         # Initialize feedthrough (D) matrix
         # self.D = self.param("D", normal(stddev=1.0), (self.H,))
-        self.D = ShiftLinearLayer()
+        self.C_shift = ShiftLinearLayer(C_tilde)
 
         # Initialize learnable discretization timescale value
         self.log_step = self.param("log_step",
@@ -237,16 +267,17 @@ class S5SSM(nn.Module):
         Returns:
             output sequence (float32): (L, H)
         """
-        ys = apply_ssm(self.Lambda_bar,
+        ys = apply_shift_add_ssm(self.Lambda_bar,
                        self.B_bar,
                        self.C_tilde,
+                       self.C_shift,
                        input_sequence,
                        self.conj_sym,
                        self.bidirectional)
 
         # Add feedthrough matrix output Du;
-        # Du = jax.vmap(lambda u: self.D(u))(input_sequence)
-        Du = self.D(input_sequence) # u = (b)
+        Du = jax.vmap(lambda u: self.D(u))(input_sequence)
+        #Du = self.D(input_sequence) # u = (b)
         return ys + Du
 
 
