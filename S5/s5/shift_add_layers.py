@@ -55,7 +55,8 @@ class ShiftLinearLayer(nn.Module):
     x_imag_rounded = round_to_fixed_ste(jnp.imag(x))
     x_real_rounded = round_to_fixed_ste(jnp.real(x))
     x_rounded =  x_real_rounded + 1j * x_imag_rounded
-
+    
+    print("Shape of x", x.shape)
     if self.hadamard:
       x = x_rounded * w_rounded
     else:
