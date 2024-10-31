@@ -10,7 +10,7 @@ import aqt.jax.v2.flax.aqt_flax as aqt
 import jax
 import jax.numpy as jnp
 from .utils.quantization import q_dot_maybe, q_had_maybe
-import shift_add_utils as sa_utils 
+import utils.shift_add_utils as sa_utils 
 
 
 def make_ste(f):
