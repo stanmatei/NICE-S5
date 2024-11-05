@@ -241,7 +241,7 @@ class S5SSM(nn.Module):
                 self.C_tilde = self.C[..., 0] + 1j * self.C[..., 1]
 
         # Initialize feedthrough (D) matrix
-        # self.D = self.param("D", normal(stddev=1.0), (self.H,))
+        self.D = self.param("D", normal(stddev=1.0), (self.H,))
         self.C_shift = ShiftLinearLayer(self.C_tilde)
 
         # Initialize learnable discretization timescale value
