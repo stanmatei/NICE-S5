@@ -65,7 +65,7 @@ class ShiftLinearLayer(nn.Module):
       b_rounded = round_to_fixed_ste(b)
       x = x + b_rounded
 
-    print("W shape", w_rounded.shape)
+    #print("W shape", w_rounded.shape)
 
     return x
 

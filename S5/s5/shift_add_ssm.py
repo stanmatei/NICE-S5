@@ -86,6 +86,7 @@ def apply_shift_add_ssm(Lambda_bar, B_bar, C_tilde, input_sequence, conj_sym, bi
                                           (Lambda_elements, Bu_elements),
                                           reverse=True)
         xs = np.concatenate((xs, xs2), axis=-1)
+        
     if C_shift is not None:
         if conj_sym:
             return jax.vmap(lambda x: C_shift(x).real)(xs)
