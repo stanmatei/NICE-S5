@@ -75,6 +75,15 @@ class ShiftLinearLayer(nn.Module):
 
     return x
 
+class DeltaLayer(nn.Module):
+    thr: float = 0
+    @nn.compact
+    def __call__(self, x):
+        print(x.shape)
+        x_roll = jnp.roll(x, 1, axis = -1)
+        x_roll = x_roll.at[:, :, -1].set(0.)
+        delta = x - x_roll
+        return delta
 
 """
 sign_clip = jax.tree_util.Partial(jnp.clip, min=-1, max=1)
@@ -204,6 +213,7 @@ class SequenceLayer(nn.Module):
     step_rescale: float = 1.0
     use_MLP_shift: bool = False
     use_sigma_delta: bool = False
+    use_relu: bool = False
 
     def setup(self):
         """Initializes the ssm, batch/layer norm and dropout
@@ -228,6 +238,8 @@ class SequenceLayer(nn.Module):
         else:
             self.norm = nn.LayerNorm()
 
+        self.delta = DeltaLayer()
+
         self.drop = nn.Dropout(
             self.dropout,
             broadcast_dims=[0],
@@ -246,6 +258,8 @@ class SequenceLayer(nn.Module):
         if self.prenorm:
             x = self.norm(x)
         x = self.seq(x)
+
+        self.delta(x)
 
         if self.activation in ["full_glu"]:
             x = self.drop(nn.gelu(x))
