@@ -57,7 +57,7 @@ def binary_operator(q_i, q_j):
     A_j, b_j = q_j
     return A_j * A_i, A_j * b_i + b_j
 
-def apply_shift_add_ssm(Lambda_bar, B_bar, C_tilde, C_shift, input_sequence, conj_sym, bidirectional):
+def apply_shift_add_ssm(Lambda_bar, B_bar, C_tilde, input_sequence, conj_sym, bidirectional, B_shift, C_shift):
     """ Compute the LxH output of discretized SSM given an LxH input.
         Args:
             Lambda_bar (complex64): discretized diagonal state matrix    (P,)
@@ -72,7 +72,12 @@ def apply_shift_add_ssm(Lambda_bar, B_bar, C_tilde, C_shift, input_sequence, con
     """
     Lambda_elements = Lambda_bar * np.ones((input_sequence.shape[0],
                                             Lambda_bar.shape[0]))
-    Bu_elements = jax.vmap(lambda u: B_bar @ u)(input_sequence)
+
+                        
+    if B_shift is not None:
+        Bu_elements = jax.vmap(lambda u: B_shift(u))(input_sequence)
+    else: 
+        Bu_elements = jax.vmap(lambda u: B_bar @ u)(input_sequence)
 
     _, xs = jax.lax.associative_scan(binary_operator, (Lambda_elements, Bu_elements))
 
@@ -81,11 +86,16 @@ def apply_shift_add_ssm(Lambda_bar, B_bar, C_tilde, C_shift, input_sequence, con
                                           (Lambda_elements, Bu_elements),
                                           reverse=True)
         xs = np.concatenate((xs, xs2), axis=-1)
-
-    if conj_sym:
-        return jax.vmap(lambda x: C_shift(x).real)(xs)
+    if C_shift is not None:
+        if conj_sym:
+            return jax.vmap(lambda x: C_shift(x).real)(xs)
+        else:
+            return jax.vmap(lambda x: C_shift(x).real)(xs)
     else:
-        return jax.vmap(lambda x: C_shift(x).real)(xs)
+        if conj_sym:
+            return jax.vmap(lambda x: 2*(C_tilde @ x).real)(xs)
+        else:
+            return jax.vmap(lambda x: (C_tilde @ x).real)(xs)
 
 
 def apply_ssm(Lambda_bar, B_bar, C_tilde, input_sequence, conj_sym, bidirectional):
@@ -103,6 +113,7 @@ def apply_ssm(Lambda_bar, B_bar, C_tilde, input_sequence, conj_sym, bidirectiona
     """
     Lambda_elements = Lambda_bar * np.ones((input_sequence.shape[0],
                                             Lambda_bar.shape[0]))
+
     Bu_elements = jax.vmap(lambda u: B_bar @ u)(input_sequence)
 
     _, xs = jax.lax.associative_scan(binary_operator, (Lambda_elements, Bu_elements))
@@ -135,6 +146,9 @@ class S5SSM(nn.Module):
     clip_eigs: bool = False
     bidirectional: bool = False
     step_rescale: float = 1.0
+    use_B_shift: bool = False
+    use_C_shift: bool = False
+    use_D_shift: bool = False 
 
     """ The S5 SSM
         Args:
@@ -242,7 +256,6 @@ class S5SSM(nn.Module):
 
         # Initialize feedthrough (D) matrix
         self.D = self.param("D", normal(stddev=1.0), (self.H,))
-        self.C_shift = ShiftLinearLayer(self.C_tilde)
 
         # Initialize learnable discretization timescale value
         self.log_step = self.param("log_step",
@@ -258,6 +271,23 @@ class S5SSM(nn.Module):
         else:
             raise NotImplementedError("Discretization method {} not implemented".format(self.discretization))
 
+        if self.use_B_shift:
+            self.B_shift = ShiftLinearLayer(self.B_bar)
+        else:
+            self.B_shift = None
+        
+        if self.use_C_shift:
+            self.C_shift = ShiftLinearLayer(self.C_tilde)
+        else:
+            self.C_shift = None
+
+        if self.use_D_shift:
+            self.D_shift = ShiftLinearLayer(self.D, hadamard = True)
+        else:
+            self.D_shift = None
+
+
+
     def __call__(self, input_sequence):
         """
         Compute the LxH output of the S5 SSM given an LxH input sequence
@@ -270,13 +300,17 @@ class S5SSM(nn.Module):
         ys = apply_shift_add_ssm(self.Lambda_bar,
                        self.B_bar,
                        self.C_tilde,
-                       self.C_shift,
                        input_sequence,
                        self.conj_sym,
-                       self.bidirectional)
+                       self.bidirectional, 
+                       self.B_shift, 
+                       self.C_shift)
 
         # Add feedthrough matrix output Du;
-        Du = jax.vmap(lambda u: self.D * u)(input_sequence)
+        if self.D_shift is not None:
+            Du = jax.vmap(lambda u: self.D_shift(u))(input_sequence)
+        else:
+            Du = jax.vmap(lambda u: self.D * u)(input_sequence)
         #Du = self.D(input_sequence) # u = (b)
         return ys + Du
 
@@ -293,7 +327,10 @@ def init_S5SSM(H,
                dt_max,
                conj_sym,
                clip_eigs,
-               bidirectional
+               bidirectional, 
+               use_B_shift,
+               use_C_shift, 
+               use_D_shift
                ):
     """Convenience function that will be used to initialize the SSM.
        Same arguments as defined in S5SSM above."""
@@ -310,4 +347,7 @@ def init_S5SSM(H,
                    dt_max=dt_max,
                    conj_sym=conj_sym,
                    clip_eigs=clip_eigs,
-                   bidirectional=bidirectional)
+                   bidirectional=bidirectional,
+                   use_B_shift=use_B_shift, 
+                   use_C_shift=use_C_shift,
+                   use_D_shift=use_D_shift)
