@@ -52,6 +52,8 @@ if __name__ == "__main__":
 						help="whether to use ShiftAdd operations for the C matrix")
 	parser.add_argument("--use_D_shift", type=str2bool, default=False,
 						help="whether to use ShiftAdd operations for the D vector")
+	parser.add_argument("--use_MLP_shift", type=str2bool, default=False,
+						help="whether to use ShiftAdd operations for feature mixing MLP")
 	parser.add_argument("--bidirectional", type=str2bool, default=False,
 						help="whether to use bidirectional model")
 	parser.add_argument("--dt_min", type=float, default=0.001,
