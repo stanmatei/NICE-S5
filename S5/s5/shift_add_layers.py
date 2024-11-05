@@ -60,7 +60,7 @@ class ShiftLinearLayer(nn.Module):
     
     else:
         w_rounded = round_power_of_2_ste(w)
-        x_rounded = round_to_fixed(x)
+        x_rounded = round_to_fixed_ste(x)
     
     if self.hadamard:
       x = x_rounded * w_rounded
