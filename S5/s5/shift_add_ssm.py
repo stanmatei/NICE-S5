@@ -276,7 +276,7 @@ class S5SSM(nn.Module):
                        self.bidirectional)
 
         # Add feedthrough matrix output Du;
-        Du = jax.vmap(lambda u: self.D(u))(input_sequence)
+        Du = jax.vmap(lambda u: self.D * u)(input_sequence)
         #Du = self.D(input_sequence) # u = (b)
         return ys + Du
 
