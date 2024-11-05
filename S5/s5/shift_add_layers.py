@@ -29,6 +29,7 @@ class ShiftLinearLayer(nn.Module):
   use_bias: bool = False
   fraction_bits: int = 16
   integer_bits: int = 16
+  use_complex: bool = False
   
   @nn.compact
   def __call__(self, x):
@@ -47,14 +48,19 @@ class ShiftLinearLayer(nn.Module):
     else:
       b = None
 
-    # TODO: consider coordinate-dependent transformations?
-    w_imag_rounded = round_power_of_2_ste(jnp.imag(w))
-    w_real_rounded = round_power_of_2_ste(jnp.real(w))
-    w_rounded = w_real_rounded + 1j * w_imag_rounded
+    if self.use_complex:
+        # TODO: consider coordinate-dependent transformations?
+        w_imag_rounded = round_power_of_2_ste(jnp.imag(w))
+        w_real_rounded = round_power_of_2_ste(jnp.real(w))
+        w_rounded = w_real_rounded + 1j * w_imag_rounded
 
-    x_imag_rounded = round_to_fixed_ste(jnp.imag(x))
-    x_real_rounded = round_to_fixed_ste(jnp.real(x))
-    x_rounded =  x_real_rounded + 1j * x_imag_rounded
+        x_imag_rounded = round_to_fixed_ste(jnp.imag(x))
+        x_real_rounded = round_to_fixed_ste(jnp.real(x))
+        x_rounded =  x_real_rounded + 1j * x_imag_rounded
+    
+    else:
+        w_rounded = round_power_of_2_ste(w)
+        x_rounded = round_to_fixed(x)
     
     if self.hadamard:
       x = x_rounded * w_rounded

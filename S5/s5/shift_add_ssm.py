@@ -86,7 +86,7 @@ def apply_shift_add_ssm(Lambda_bar, B_bar, C_tilde, input_sequence, conj_sym, bi
                                           (Lambda_elements, Bu_elements),
                                           reverse=True)
         xs = np.concatenate((xs, xs2), axis=-1)
-        
+
     if C_shift is not None:
         if conj_sym:
             return jax.vmap(lambda x: C_shift(x).real)(xs)
@@ -273,12 +273,12 @@ class S5SSM(nn.Module):
             raise NotImplementedError("Discretization method {} not implemented".format(self.discretization))
 
         if self.use_B_shift:
-            self.B_shift = ShiftLinearLayer(self.B_bar)
+            self.B_shift = ShiftLinearLayer(self.B_bar, use_complex=True)
         else:
             self.B_shift = None
         
         if self.use_C_shift:
-            self.C_shift = ShiftLinearLayer(self.C_tilde)
+            self.C_shift = ShiftLinearLayer(self.C_tilde, use_complex=True)
         else:
             self.C_shift = None
 
