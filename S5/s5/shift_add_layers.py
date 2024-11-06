@@ -221,7 +221,7 @@ class SequenceLayer(nn.Module):
             x = self.norm(x)
         x = self.seq(x)
 
-        # self.delta(x)
+        self.delta(x)
 
         if self.activation in ["full_glu"]:
             x = self.drop(self.pre_act(x))
