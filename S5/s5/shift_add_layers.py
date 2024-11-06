@@ -225,16 +225,40 @@ class SequenceLayer(nn.Module):
 
         if self.activation in ["full_glu"]:
             x = self.drop(self.pre_act(x))
-            x = self.out1(x) * jax.nn.sigmoid(self.out2(x))
+
+            if self.use_sigma_delta:
+                x = self.delta(x)
+                out1 = jnp.cumsum(self.out1(x), axis = 0)
+                out2 = jnp.cumsum(self.out2(x), axis = 0)
+                x = out1 * jax.nn.sigmoid(out2)
+            else:
+                x = self.out1(x) * jax.nn.sigmoid(self.out2(x))
+
             x = self.drop(x)
+
         elif self.activation in ["half_glu1"]:
             x = self.drop(self.pre_act(x))
-            x = x * jax.nn.sigmoid(self.out2(x))
+
+            if self.use_sigma_delta:
+                x = self.delta(x)
+                out2 = jnp.cumsum(self.out2(x), axis = 0)
+                x = x * jax.nn.sigmoid(out2)
+            else:
+                x = x * jax.nn.sigmoid(self.out2(x))
+
             x = self.drop(x)
+
         elif self.activation in ["half_glu2"]:
             # Only apply GELU to the gate input
             x1 = self.drop(self.pre_act(x))
-            x = x * jax.nn.sigmoid(self.out2(x1))
+
+            if self.use_sigma_delta:
+                x1 = self.delta(x1)
+                out2 = jnp.cumsum(self.out2(x1), axis = 0)
+                x = x * jax.nn.sigmoid(out2)
+            else:
+                x = x * jax.nn.sigmoid(self.out2(x1))
+                
             x = self.drop(x)
         elif self.activation in ["gelu"]:
             x = self.drop(self.pre_act(x))
