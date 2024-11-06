@@ -330,3 +330,72 @@ class RetrievalModel(nn.Module):
         features = np.concatenate([outs0, outs1, outs0-outs1, outs0*outs1], axis=-1)  # bszx4*d_model
         out = self.decoder(features)
         return nn.log_softmax(out, axis=-1)
+
+
+
+class ShiftAddRegressionModel(nn.Module):
+    """
+    """
+    ssm: nn.Module
+    d_output: int
+    d_model: int
+    n_layers: int
+    padded: bool = False
+    activation: str = "gelu"
+    dropout: float = 0.2
+    training: bool = True
+    mode: str = "pool"
+    prenorm: bool = False
+    batchnorm: bool = False
+    bn_momentum: float = 0.9
+    step_rescale: float = 1.0
+    use_MLP_shift: bool = False
+    use_sigma_delta: bool = False
+    use_relu: bool = False
+    
+
+    def setup(self):
+        """
+        Initializes the S5 stacked encoder and a linear decoder.
+        """
+        self.encoder = StackedEncoderModel(
+                            ssm=self.ssm,
+                            d_model=self.d_model,
+                            n_layers=self.n_layers,
+                            activation=self.activation,
+                            dropout=self.dropout,
+                            training=self.training,
+                            prenorm=self.prenorm,
+                            batchnorm=self.batchnorm,
+                            bn_momentum=self.bn_momentum,
+                            step_rescale=self.step_rescale,
+                            use_MLP_shift=self.use_MLP_shift,
+                            use_sigma_delta=self.use_sigma_delta,
+                            use_relu=self.use_relu
+        )
+        # NOTE: nn.Dense calls dot_general(activation, weights)
+        self.decoder = nn.Dense(self.d_output)
+
+    def __call__(self, x, integration_timesteps):
+        """
+        Compute the size d_output log softmax output given a
+        Lxd_input input sequence.
+        Args:
+             x (float32): input sequence (L, d_input)
+        Returns:
+            output (float32): (d_output)
+        """
+        if self.padded:
+            x, length = x  # input consists of data and prepadded seq lens
+
+        x = self.encoder(x, integration_timesteps)
+        return self.decoder(x)
+        
+
+# Here we call vmap to parallelize across a batch of input sequences
+ShiftAddBatchRegressionModel = nn.vmap(
+    ShiftAddRegressionModel,
+    in_axes=(0, 0),
+    out_axes=0,
+    variable_axes={"params": None, "dropout": None, 'batch_stats': None, "cache": 0, "prime": None},
+    split_rngs={"params": False, "dropout": True}, axis_name='batch')

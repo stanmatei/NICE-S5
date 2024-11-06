@@ -65,7 +65,7 @@ class ShiftLinearLayer(nn.Module):
     if self.hadamard:
       x = x_rounded * w_rounded
     else:
-      x = jnp.matmul(x_rounded, w_rounded)
+      x = jnp.matmul(x_rounded, w_rounded.T)
 
     if b is not None:
       b_rounded = round_to_fixed_ste(b)
@@ -86,7 +86,7 @@ class DeltaLayer(nn.Module):
         return delta
 
 class PreAct(nn.Module):
-    act: string = "relu"
+    act: str = "relu"
     @nn.compact
     def __call__(self, x):
         if self.act == "relu":
@@ -174,7 +174,7 @@ class SequenceLayer(nn.Module):
     def setup(self):
         """Initializes the ssm, batch/layer norm and dropout
         """
-        self.seq = self.ssm(step_rescale=self.step_rescale)
+        self.seq = self.ssm()
 
         if self.use_relu:
             self.pre_act = PreAct()
@@ -221,7 +221,7 @@ class SequenceLayer(nn.Module):
             x = self.norm(x)
         x = self.seq(x)
 
-        self.delta(x)
+        # self.delta(x)
 
         if self.activation in ["full_glu"]:
             x = self.drop(self.pre_act(x))
