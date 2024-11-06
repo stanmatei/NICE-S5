@@ -295,7 +295,7 @@ class RetrievalModel(nn.Module):
                             bn_momentum=self.bn_momentum,
                             step_rescale=self.step_rescale,
                             use_MLP_shift=self.use_MLP_shift,
-                            use_sigma_delta=self.use_sigma_delta
+                            use_sigma_delta=self.use_sigma_delta,
                             use_relu=self.use_relu
                                         )
         BatchRetrievalDecoder = nn.vmap(
