@@ -81,7 +81,7 @@ class DeltaLayer(nn.Module):
     def __call__(self, x):
         print(x.shape)
         x_roll = jnp.roll(x, 1, axis = -1)
-        x_roll = x_roll.at[:, :, -1].set(0.)
+        x_roll = x_roll.at[:, :, 0].set(0.)
         delta = x - x_roll
         return delta
 

@@ -127,7 +127,7 @@ def train(args):
             batchnorm=args.batchnorm,
             bn_momentum=args.bn_momentum,
             use_MLP_shift=args.use_MLP_shift,
-            use_delta_sigma=args.use_delta_sigma,
+            use_sigma_delta=args.use_sigma_delta,
             use_relu=args.use_relu
         )
 
@@ -146,7 +146,7 @@ def train(args):
             batchnorm=args.batchnorm,
             bn_momentum=args.bn_momentum,
             use_MLP_shift=args.use_MLP_shift,
-            use_delta_sigma=args.use_delta_sigma,
+            use_sigma_delta=args.use_sigma_delta,
             use_relu=args.use_relu
         )
 
