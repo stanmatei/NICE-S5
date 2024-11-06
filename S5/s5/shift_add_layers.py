@@ -80,7 +80,7 @@ class DeltaLayer(nn.Module):
     @nn.compact
     def __call__(self, x):
         print(x.shape)
-        x_roll = jnp.roll(x, 1, axis = -1)
+        x_roll = jnp.roll(x, 1, axis = 0)
         x_roll = x_roll.at[0, :].set(0.)
         delta = x - x_roll
         return delta
@@ -93,53 +93,6 @@ class PreAct(nn.Module):
             return nn.relu(x)
         elif self.act == "gelu":
             return nn.gelu(x)
-
-"""
-sign_clip = jax.tree_util.Partial(jnp.clip, min=-1, max=1)
-shift_clip = jax.tree_util.Partial(jnp.clip, min=-14, max=0)
-
-sign_clip_ste = make_ste(sign_clip)
-shift_clip_ste = make_ste(shift_clip)
-round_to_fixed_ste = make_ste(sa_utils.round_to_fixed)
-round_ste = make_ste(jnp.round)
-sign_ste = make_ste(jnp.sign)
-
-def shift_linear_func(x, shift, sign, bias, shift_range=(-14,0)):
-    sign = sign_clip_ste(sign)
-    shift = shift_clip_ste(shift)
-
-    x_rounded = round_to_fixed_ste(x)
-    #if bias:
-    bias = round_to_fixed_ste(bias)
-
-    v = round_ste(2**shift) * sign_ste(round_ste(sign))
-    #print("X rnd, v", x_rounded.shape, v.shape)
-    out = x_rounded * v.T
-    #print("OUT", out.shape)
-    #if bias:
-    bias = jnp.expand_dims(bias, 0)  # Adds a new axis at dimension 0
-    bias = jnp.broadcast_to(bias, out.shape)  # Expands to match the shape of 'out'
-    out += bias
-
-    return out
-
-class ShiftLinearLayer(nn.Module):
-    fraction_bits = 16
-    integer_bit = 16
-
-
-    @nn.compact
-    def __call__(self, x):
-        sign = self.param('sign', lambda rng, shape: jnp.zeros(shape), x.shape[1:])
-        shift = self.param('shift', lambda rng, shape: jnp.zeros(shape), x.shape[1:]) # shift
-        bias = self.param('bias', lambda rng, shape: jnp.zeros(shape), x.shape[1:]) # add
-
-        # round the shift param mat
-        shift_rounded = round_ste(shift_clip_ste(shift))
-        sign_rounded = round_ste(sign_clip_ste(sign))
-        return shift_linear_func(x, shift_rounded, sign_rounded, bias)
-        
-"""
 
 class SequenceLayer(nn.Module):
     """ Defines a single S5 layer, with S5 SSM, nonlinearity,
@@ -258,7 +211,7 @@ class SequenceLayer(nn.Module):
                 x = x * jax.nn.sigmoid(out2)
             else:
                 x = x * jax.nn.sigmoid(self.out2(x1))
-                
+
             x = self.drop(x)
         elif self.activation in ["gelu"]:
             x = self.drop(self.pre_act(x))
