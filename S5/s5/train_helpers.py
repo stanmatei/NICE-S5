@@ -9,6 +9,10 @@ import optax
 from typing import Any, Tuple
 
 
+def _compute_act_sparsity(act, atol=1e-6):
+    return np.isclose(act, 0, atol=atol).sum() / act.size
+
+
 # LR schedulers
 def linear_warmup(step, base_lr, end_step, lr_min=None):
     return base_lr * (step + 1) / end_step
@@ -370,20 +374,21 @@ def prep_batch(batch: tuple,
     return full_inputs, targets.astype(float), integration_timesteps
 
 
-def train_epoch(state, rng, model, trainloader, seq_len, in_dim, batchnorm, lr_params, loss_fn=cross_entropy_loss):
+def train_epoch(state, rng, model, trainloader, seq_len, in_dim, batchnorm, lr_params, loss_fn=cross_entropy_loss, log_act_sparsity=False):
     """
     Training function for an epoch that loops over batches.
     """
     # Store Metrics
     model = model(training=True)
     batch_losses = []
+    act_sparsities = []
 
     decay_function, ssm_lr, lr, step, end_step, opt_config, lr_min = lr_params
 
     for batch_idx, batch in enumerate(tqdm(trainloader)):
         inputs, labels, integration_times = prep_batch(batch, seq_len, in_dim)
         # rng, drop_rng = jax.random.split(rng)
-        state, loss = train_step(
+        state, loss, act_sp = train_step(
             state,
             rng,  # move splitting into train_step
             inputs,
@@ -391,14 +396,29 @@ def train_epoch(state, rng, model, trainloader, seq_len, in_dim, batchnorm, lr_p
             integration_times,
             model,
             batchnorm,
-            loss_act=loss_fn
+            loss_act=loss_fn,
+            log_act_sparsity=log_act_sparsity,
         )
         batch_losses.append(loss)
+        if log_act_sparsity:
+            act_sparsities.append(act_sp)
         lr_params = (decay_function, ssm_lr, lr, step, end_step, opt_config, lr_min)
         state, step = update_learning_rate_per_step(lr_params, state)
 
+    if log_act_sparsity:
+        # aggregate mean
+        act_sparsities = jax.tree.map(lambda *xs: np.mean(np.stack(xs)), *act_sparsities)
+        act_sparsities = jax.tree.map(lambda x: x if x is None else x.item(), act_sparsities)
+        act_sparsities = jax.tree.map(lambda x: x[0] if isinstance(x, tuple) else x, act_sparsities)
+        # clean up
+        clean_up_fn = lambda x: x['__call__'] if isinstance(x, dict) and '__call__' in x else x
+        is_leaf_fn = lambda node: isinstance(node, dict) and '__call__' in node
+        act_sparsities = jax.tree.map(clean_up_fn, act_sparsities, is_leaf=is_leaf_fn)
+        # flatten
+        act_sparsities = flatten_pytree(act_sparsities)
+
     # Return average loss over batches
-    return state, np.mean(np.array(batch_losses)), step
+    return state, np.mean(np.array(batch_losses)), step, act_sparsities
 
 
 def validate(state, skey, model, testloader, seq_len, in_dim, batchnorm, 
@@ -429,6 +449,7 @@ def train_step(state,
                model,
                batchnorm,
                loss_act = cross_entropy_loss,
+               log_act_sparsity = False,
                ):
     """Performs a single training step given a batch of data"""
     rng, drop_rng = jax.random.split(rng)  # moved here from train_epoch
@@ -456,11 +477,16 @@ def train_step(state,
 
     (loss, (mod_vars, logits)), grads = jax.value_and_grad(loss_fn, has_aux=True)(state.params)
 
+    if log_act_sparsity:
+        act_sparsity_logs = jax.tree_util.tree_map(lambda x: _compute_act_sparsity(x), mod_vars["intermediates"])
+    else:
+        act_sparsity_logs = None
+
     if batchnorm:
         state = state.apply_gradients(grads=grads, batch_stats=mod_vars["batch_stats"])
     else:
         state = state.apply_gradients(grads=grads)
-    return state, loss
+    return state, loss, act_sparsity_logs
 
 
 @partial(jax.jit, static_argnums=(5, 6, 7, 8))

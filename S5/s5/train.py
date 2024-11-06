@@ -194,14 +194,21 @@ def train(args):
         lr_params = (decay_function, ssm_lr, lr, step, end_step, args.opt_config, args.lr_min)
 
         train_rng, skey = random.split(train_rng)
-        state, train_loss, step = train_epoch(state,
-                                              skey,
-                                              model_cls,
-                                              trainloader,
-                                              seq_len,
-                                              in_dim,
-                                              args.batchnorm,
-                                              lr_params)
+        state, train_loss, step, act_sparsities = train_epoch(
+            state,
+            skey,
+            model_cls,
+            trainloader,
+            seq_len,
+            in_dim,
+            args.batchnorm,
+            lr_params,
+            log_act_sparsity=True,
+        )
+        act_sparsity_logs = {f"act_sparsity/train/{k}": v for k, v in act_sparsities.items()}
+        # NOTE: for now, just print the sparsity levels, later log them to W&B
+        # wandb.log(**act_sparsity_logs, step=step)
+        print(act_sparsity_logs)
 
         if valloader is not None:
             print(f"[*] Running Epoch {epoch + 1} Validation...")

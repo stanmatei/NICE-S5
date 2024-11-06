@@ -225,7 +225,9 @@ class SequenceLayer(nn.Module):
 
         if self.activation in ["full_glu"]:
             x = self.drop(self.pre_act(x))
+            self.sow("intermediates", "pre_act_x", x)  # NOTE: records activation sparsity
             x = self.out1(x) * jax.nn.sigmoid(self.out2(x))
+            self.sow("intermediates", "glu_x", x)
             x = self.drop(x)
         elif self.activation in ["half_glu1"]:
             x = self.drop(self.pre_act(x))
