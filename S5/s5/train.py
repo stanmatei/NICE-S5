@@ -126,7 +126,9 @@ def train(args):
             prenorm=args.prenorm,
             batchnorm=args.batchnorm,
             bn_momentum=args.bn_momentum,
-            use_MLP_shift=args.use_MLP_shift
+            use_MLP_shift=args.use_MLP_shift,
+            use_delta_sigma=args.use_delta_sigma,
+            use_relu=args.use_relu
         )
 
     else:
@@ -143,7 +145,9 @@ def train(args):
             prenorm=args.prenorm,
             batchnorm=args.batchnorm,
             bn_momentum=args.bn_momentum,
-            use_MLP_shift=args.use_MLP_shift
+            use_MLP_shift=args.use_MLP_shift,
+            use_delta_sigma=args.use_delta_sigma,
+            use_relu=args.use_relu
         )
 
     # initialize training state

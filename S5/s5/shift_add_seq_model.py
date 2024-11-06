@@ -33,6 +33,7 @@ class StackedEncoderModel(nn.Module):
     step_rescale: float = 1.0
     use_MLP_shift: bool = False
     use_sigma_delta: bool = False
+    use_relu: bool = False
 
     def setup(self):
         """
@@ -51,7 +52,8 @@ class StackedEncoderModel(nn.Module):
                 bn_momentum=self.bn_momentum,
                 step_rescale=self.step_rescale,
                 use_MLP_shift=self.use_MLP_shift,
-                use_sigma_delta=self.use_sigma_delta
+                use_sigma_delta=self.use_sigma_delta,
+                use_relu=self.use_relu
             )
             for _ in range(self.n_layers)
         ]
@@ -129,6 +131,7 @@ class ClassificationModel(nn.Module):
     step_rescale: float = 1.0
     use_MLP_shift: bool = False
     use_sigma_delta: bool = False
+    use_relu: bool = False
 
     def setup(self):
         """
@@ -146,7 +149,8 @@ class ClassificationModel(nn.Module):
                             bn_momentum=self.bn_momentum,
                             step_rescale=self.step_rescale,
                             use_MLP_shift=self.use_MLP_shift,
-                            use_sigma_delta=self.use_sigma_delta
+                            use_sigma_delta=self.use_sigma_delta,
+                            use_relu=self.use_relu
                                         )
         self.decoder = nn.Dense(self.d_output)
 
@@ -263,6 +267,7 @@ class RetrievalModel(nn.Module):
     step_rescale: float = 1.0
     use_MLP_shift: bool = False
     use_sigma_delta: bool = False
+    use_relu: bool = False
 
     def setup(self):
         """
@@ -291,6 +296,7 @@ class RetrievalModel(nn.Module):
                             step_rescale=self.step_rescale,
                             use_MLP_shift=self.use_MLP_shift,
                             use_sigma_delta=self.use_sigma_delta
+                            use_relu=self.use_relu
                                         )
         BatchRetrievalDecoder = nn.vmap(
             RetrievalDecoder,

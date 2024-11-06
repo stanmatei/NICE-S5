@@ -46,6 +46,7 @@ if __name__ == "__main__":
 						help="whether to enforce conjugate symmetry")
 	parser.add_argument("--clip_eigs", type=str2bool, default=False,
 						help="whether to enforce the left-half plane condition")
+
 	parser.add_argument("--use_B_shift", type=str2bool, default=False,
 						help="whether to use ShiftAdd operations for the B matrix")
 	parser.add_argument("--use_C_shift", type=str2bool, default=False,
@@ -54,6 +55,11 @@ if __name__ == "__main__":
 						help="whether to use ShiftAdd operations for the D vector")
 	parser.add_argument("--use_MLP_shift", type=str2bool, default=False,
 						help="whether to use ShiftAdd operations for feature mixing MLP")
+	parser.add_argument("--use_delta_sigma", type=str2bool, default=False,
+						help="whether to use Delta Sigma in the feature mixing layer")
+	parser.add_argument("--use_relu", type=str2bool, default=False,
+						help="whether to use ReLU in the feature mixing layer")
+						
 	parser.add_argument("--bidirectional", type=str2bool, default=False,
 						help="whether to use bidirectional model")
 	parser.add_argument("--dt_min", type=float, default=0.001,

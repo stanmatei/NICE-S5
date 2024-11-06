@@ -85,6 +85,15 @@ class DeltaLayer(nn.Module):
         delta = x - x_roll
         return delta
 
+class PreAct(nn.Module):
+    act: string = "relu"
+    @nn.compact
+    def __call__(self, x):
+        if self.act == "relu":
+            return nn.relu(x)
+        elif self.act == "gelu":
+            return nn.gelu(x)
+
 """
 sign_clip = jax.tree_util.Partial(jnp.clip, min=-1, max=1)
 shift_clip = jax.tree_util.Partial(jnp.clip, min=-14, max=0)
@@ -132,59 +141,6 @@ class ShiftLinearLayer(nn.Module):
         
 """
 
-
-"""
-
-
-def make_ste(f):
-    @jax.custom_gradient
-    def ste_foo(*args):
-        return f(*args), lambda g: g * args[0]
-    
-    return ste_foo
-
-clip_ste = make_ste(jnp.clip)
-round_to_fixed_ste = make_ste(sa_utils.round_to_fixed)
-round_ste = make_ste(jnp.round)
-sign_ste = make_ste(jnp.sign)
-
-def shift_linear_func(x, shift, sign, bias=None, shift_range=(-14,0)):
-    sign = clip_ste(sign, -1, 1)
-    shift = clip_ste(shift, *shift_range)
-
-    x_rounded = round_to_fixed_ste(x)
-    if bias:
-        bias = round_to_fixed_ste(bias)
-
-    v = round_ste(2**shift) * sign_ste(round_ste(sign))
-    out = x_rounded @ v.T
-    if bias:
-        bias = jnp.expand_dims(bias, 0)  # Adds a new axis at dimension 0
-        bias = jnp.broadcast_to(bias, out.shape)  # Expands to match the shape of 'out'
-        out += bias
-
-
-class ShiftLinearLayer(nn.Module):
-    fraction_bits = 16
-    integer_bit = 16
-
-
-    @nn.compact
-    def __call__(self, x):
-        sign = self.param('sign', lambda rng, shape: jnp.zeros(shape), x.shape[1:])
-        shift = self.param('shift', lambda rng, shape: jnp.zeros(shape), x.shape[1:]) # shift
-        bias = self.param('bias', lambda rng, shape: jnp.zeros(shape), x.shape[1:]) # add
-
-        # shift_rounded = round_ste(shift_clip_ste(shift))
-        #sign_rounded = round_ste(sign_clip_ste(sign))
-        
-
-        # round the shift param mat
-        shift_rounded = round_ste(clip_ste(shift))
-        sign_rounded = round_ste(clip_ste(sign))
-        return shift_linear_func(x, shift_rounded, sign_rounded, bias)
-        
-"""
 class SequenceLayer(nn.Module):
     """ Defines a single S5 layer, with S5 SSM, nonlinearity,
             dropout, batch/layer norm, etc.
@@ -219,6 +175,12 @@ class SequenceLayer(nn.Module):
         """Initializes the ssm, batch/layer norm and dropout
         """
         self.seq = self.ssm(step_rescale=self.step_rescale)
+
+        if self.use_relu:
+            self.pre_act = PreAct()
+        else:
+            self.pre_act = PreAct(act = "gelu")
+
         if self.use_MLP_shift:
             if self.activation in ["full_glu"]:
                 self.out1 = ShiftLinearLayer(use_bias = True)
@@ -262,20 +224,20 @@ class SequenceLayer(nn.Module):
         self.delta(x)
 
         if self.activation in ["full_glu"]:
-            x = self.drop(nn.gelu(x))
+            x = self.drop(self.pre_act(x))
             x = self.out1(x) * jax.nn.sigmoid(self.out2(x))
             x = self.drop(x)
         elif self.activation in ["half_glu1"]:
-            x = self.drop(nn.gelu(x))
+            x = self.drop(self.pre_act(x))
             x = x * jax.nn.sigmoid(self.out2(x))
             x = self.drop(x)
         elif self.activation in ["half_glu2"]:
             # Only apply GELU to the gate input
-            x1 = self.drop(nn.gelu(x))
+            x1 = self.drop(self.pre_act(x))
             x = x * jax.nn.sigmoid(self.out2(x1))
             x = self.drop(x)
         elif self.activation in ["gelu"]:
-            x = self.drop(nn.gelu(x))
+            x = self.drop(self.pre_act(x))
         else:
             raise NotImplementedError(
                    "Activation: {} not implemented".format(self.activation))
