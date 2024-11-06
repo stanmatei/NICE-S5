@@ -79,7 +79,6 @@ class DeltaLayer(nn.Module):
     thr: float = 0
     @nn.compact
     def __call__(self, x):
-        print(x.shape)
         x_roll = jnp.roll(x, 1, axis = 0)
         x_roll = x_roll.at[0, :].set(0.)
         delta = x - x_roll
