@@ -19,7 +19,7 @@ def smape(x, y):
 
 def run(args):
     # Setup logging
-    wandb.init(project=args.experiment, config=vars(args))
+    wandb.init(project="NICE-S5", entity="rug-minds", config=vars(args))
 
     # Set randomness...
     print("[*] Setting Randomness...")
