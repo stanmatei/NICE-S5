@@ -216,7 +216,6 @@ def train(args):
         flatten(act_sparsities)
         act_sparsity_logs = {f"act_sparsity/train/{k}": v[0] for k, v in act_sparsities.items()}
         for k, v in act_sparsities.items():
-            for layer in v:
             print("k", k)
             print("v", v[0])
             print("______")
