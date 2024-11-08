@@ -477,7 +477,8 @@ def train_step(state,
 
     (loss, (mod_vars, logits)), grads = jax.value_and_grad(loss_fn, has_aux=True)(state.params)
 
-    if log_act_sparsity:
+    #if log_act_sparsity:
+    if True:
         act_sparsity_logs = jax.tree_util.tree_map(lambda x: _compute_act_sparsity(x), mod_vars["intermediates"])
     else:
         act_sparsity_logs = None
