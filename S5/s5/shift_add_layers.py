@@ -65,7 +65,7 @@ class ShiftLinearLayer(nn.Module):
     if self.hadamard:
       x = x_rounded * w_rounded
     else:
-      x = jnp.matmul(x_rounded, w_rounded)
+      x = jnp.matmul(x_rounded, w_rounded.T)
 
     if b is not None:
       b_rounded = round_to_fixed_ste(b)
@@ -76,70 +76,23 @@ class ShiftLinearLayer(nn.Module):
     return x
 
 class DeltaLayer(nn.Module):
-    thr: float = 0
+    thr: float = 0.0
     @nn.compact
     def __call__(self, x):
-        print(x.shape)
-        x_roll = jnp.roll(x, 1, axis = -1)
-        x_roll = x_roll.at[:, :, -1].set(0.)
+        x_roll = jnp.roll(x, 1, axis = 0)
+        x_roll = x_roll.at[0, :].set(0.)
         delta = x - x_roll
+        #delta = nn.relu(delta - thr) - nn.relu(-delta - thr)
         return delta
 
 class PreAct(nn.Module):
-    act: string = "relu"
+    act: str = "relu"
     @nn.compact
     def __call__(self, x):
         if self.act == "relu":
             return nn.relu(x)
         elif self.act == "gelu":
             return nn.gelu(x)
-
-"""
-sign_clip = jax.tree_util.Partial(jnp.clip, min=-1, max=1)
-shift_clip = jax.tree_util.Partial(jnp.clip, min=-14, max=0)
-
-sign_clip_ste = make_ste(sign_clip)
-shift_clip_ste = make_ste(shift_clip)
-round_to_fixed_ste = make_ste(sa_utils.round_to_fixed)
-round_ste = make_ste(jnp.round)
-sign_ste = make_ste(jnp.sign)
-
-def shift_linear_func(x, shift, sign, bias, shift_range=(-14,0)):
-    sign = sign_clip_ste(sign)
-    shift = shift_clip_ste(shift)
-
-    x_rounded = round_to_fixed_ste(x)
-    #if bias:
-    bias = round_to_fixed_ste(bias)
-
-    v = round_ste(2**shift) * sign_ste(round_ste(sign))
-    #print("X rnd, v", x_rounded.shape, v.shape)
-    out = x_rounded * v.T
-    #print("OUT", out.shape)
-    #if bias:
-    bias = jnp.expand_dims(bias, 0)  # Adds a new axis at dimension 0
-    bias = jnp.broadcast_to(bias, out.shape)  # Expands to match the shape of 'out'
-    out += bias
-
-    return out
-
-class ShiftLinearLayer(nn.Module):
-    fraction_bits = 16
-    integer_bit = 16
-
-
-    @nn.compact
-    def __call__(self, x):
-        sign = self.param('sign', lambda rng, shape: jnp.zeros(shape), x.shape[1:])
-        shift = self.param('shift', lambda rng, shape: jnp.zeros(shape), x.shape[1:]) # shift
-        bias = self.param('bias', lambda rng, shape: jnp.zeros(shape), x.shape[1:]) # add
-
-        # round the shift param mat
-        shift_rounded = round_ste(shift_clip_ste(shift))
-        sign_rounded = round_ste(sign_clip_ste(sign))
-        return shift_linear_func(x, shift_rounded, sign_rounded, bias)
-        
-"""
 
 class SequenceLayer(nn.Module):
     """ Defines a single S5 layer, with S5 SSM, nonlinearity,
@@ -170,11 +123,12 @@ class SequenceLayer(nn.Module):
     use_MLP_shift: bool = False
     use_sigma_delta: bool = False
     use_relu: bool = False
+    thr: float = 0.0
 
     def setup(self):
         """Initializes the ssm, batch/layer norm and dropout
         """
-        self.seq = self.ssm(step_rescale=self.step_rescale)
+        self.seq = self.ssm()
 
         if self.use_relu:
             self.pre_act = PreAct()
@@ -200,7 +154,7 @@ class SequenceLayer(nn.Module):
         else:
             self.norm = nn.LayerNorm()
 
-        self.delta = DeltaLayer()
+        self.delta = DeltaLayer(thr=self.thr)
 
         self.drop = nn.Dropout(
             self.dropout,
@@ -221,23 +175,42 @@ class SequenceLayer(nn.Module):
             x = self.norm(x)
         x = self.seq(x)
 
-        self.delta(x)
-
         if self.activation in ["full_glu"]:
             x = self.drop(self.pre_act(x))
-            self.sow("intermediates", "pre_act_x", x)  # NOTE: records activation sparsity
-            x = self.out1(x) * jax.nn.sigmoid(self.out2(x))
-            self.sow("intermediates", "glu_x", x)
+            self.sow("intermediates", "pre_act_x", x)  
+            if self.use_sigma_delta:
+                x = self.delta(x)
+                self.sow("intermediates", "delta_x", x) # NOTE: records activation sparsity
+                out1 = jnp.cumsum(self.out1(x), axis = 0)
+                out2 = jnp.cumsum(self.out2(x), axis = 0)
+                x = out1 * jax.nn.sigmoid(out2)
+                self.sow("intermediates", "glu_x", x)
+            else:
+                x = self.out1(x) * jax.nn.sigmoid(self.out2(x))
+                 self.sow("intermediates", "glu_x", x)
             x = self.drop(x)
+
         elif self.activation in ["half_glu1"]:
             x = self.drop(self.pre_act(x))
-            x = x * jax.nn.sigmoid(self.out2(x))
+            if self.use_sigma_delta:
+                x = self.delta(x)
+                out2 = jnp.cumsum(self.out2(x), axis = 0)
+                x = x * jax.nn.sigmoid(out2)
+            else:
+                x = x * jax.nn.sigmoid(self.out2(x))
             x = self.drop(x)
+
         elif self.activation in ["half_glu2"]:
             # Only apply GELU to the gate input
             x1 = self.drop(self.pre_act(x))
-            x = x * jax.nn.sigmoid(self.out2(x1))
+            if self.use_sigma_delta:
+                x1 = self.delta(x1)
+                out2 = jnp.cumsum(self.out2(x1), axis = 0)
+                x = x * jax.nn.sigmoid(out2)
+            else:
+                x = x * jax.nn.sigmoid(self.out2(x1))
             x = self.drop(x)
+            
         elif self.activation in ["gelu"]:
             x = self.drop(self.pre_act(x))
         else:

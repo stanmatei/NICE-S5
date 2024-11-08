@@ -19,7 +19,7 @@ def smape(x, y):
 
 def run(args):
     # Setup logging
-    wandb.init(project=args.experiment, config=vars(args))
+    wandb.init(project="NICE-S5", entity="rug-minds", config=vars(args))
 
     # Set randomness...
     print("[*] Setting Randomness...")
@@ -52,8 +52,7 @@ def run(args):
 
 
         # modify this to be a loop over the various tau values and their directories.
-        data_path = pathlib.Path(__file__).parent / "dynamical" / "data" / "MackeyGlass" / f"tau_{args.tau}"
-        print(data_path)
+        data_path = pathlib.Path(__file__).parent / "dynamical" / "data" / "MackeyGlass" / f"{args.tau}"
         (
             trainloader,
             valloader,
@@ -99,14 +98,17 @@ if __name__ == "__main__":
     parser.add_argument("--tau", type=str, default=None)
 
     # Quant flags
-    parser.add_argument("--a_bits", type=int_or_none, default=None)
-    parser.add_argument("--b_bits", type=int_or_none, default=None)
-    parser.add_argument("--c_bits", type=int_or_none, default=None)
-    parser.add_argument("--d_bits", type=int_or_none, default=None)
-    parser.add_argument("--ssm_act_bits", type=int_or_none, default=None)
-    parser.add_argument("--non_ssm_bits", type=int_or_none, default=None)
-    parser.add_argument("--non_ssm_act_bits", type=int_or_none, default=None)
-    parser.add_argument("--shift-add-a", type=bool, default=False)
+    # parser.add_argument("--a_bits", type=int_or_none, default=None)
+    # parser.add_argument("--b_bits", type=int_or_none, default=None)
+    # parser.add_argument("--c_bits", type=int_or_none, default=None)
+    # parser.add_argument("--d_bits", type=int_or_none, default=None)
+    # parser.add_argument("--ssm_act_bits", type=int_or_none, default=None)
+    # parser.add_argument("--non_ssm_bits", type=int_or_none, default=None)
+    # parser.add_argument("--non_ssm_act_bits", type=int_or_none, default=None)
+    parser.add_argument("--shift_add_b", type=bool, default=False)
+    parser.add_argument("--shift_add_c", type=bool, default=False)
+    parser.add_argument("--shift_add_d", type=bool, default=False)
+    parser.add_argument("--shift_add_mlp", type=bool, default=False)
 
     # Dataset flags
     parser.add_argument(
@@ -247,14 +249,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     print(
-        f"""Running experiment: {args.experiment} experiment with quantization bits
-    a   : {args.a_bits}
-    b   : {args.b_bits}
-    c   : {args.c_bits}
-    d   : {args.d_bits}
-    act : {args.ssm_act_bits}
-    misc: {args.non_ssm_bits}
-    nact: {args.non_ssm_act_bits}
+        f"""Running experiment: {args.experiment} experiment with shift-add
+    b   : {args.shift_add_b}
+    c   : {args.shift_add_c}
+    d   : {args.shift_add_d}
+    mlp   : {args.shift_add_mlp}
     """
     )
     run(args)

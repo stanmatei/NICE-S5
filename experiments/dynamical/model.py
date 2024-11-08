@@ -9,7 +9,15 @@ import jax
 import jax.numpy as jnp
 import wandb
 
-from s5 import qssm_aqt, ssm_init, qseq_model, train_helpers
+from s5 import (
+    qssm_aqt,
+    ssm_init,
+    qseq_model,
+    train_helpers,
+    shift_add_ssm,
+    shift_add_seq_model,
+)
+
 
 def dynamical_ssm(args, seq_len, in_dim, init_rng) -> tuple:
     # Set SSM size and block size
@@ -36,18 +44,23 @@ def dynamical_ssm(args, seq_len, in_dim, init_rng) -> tuple:
     Lambda = (Lambda * jnp.ones((args.blocks, block_size))).ravel()
     V = jax.scipy.linalg.block_diag(*([V] * args.blocks))
     Vinv = jax.scipy.linalg.block_diag(*([Vc] * args.blocks))
-
-    q_config = qssm_aqt.QuantizationConfig(
-        a_precision=args.a_bits,
-        b_precision=args.b_bits,
-        c_precision=args.c_bits,
-        d_precision=args.d_bits,
-        non_ssm_precision=args.non_ssm_bits,
-        ssm_act_precision=args.ssm_act_bits,
-        non_ssm_act_precision=args.non_ssm_act_bits,
-    )
-
-    ssm_init_fn = qssm_aqt.init_qS5SSM(
+    # ssm_init_fn = qssm_aqt.init_qS5SSM(
+    #     H=args.d_model,
+    #     P=ssm_size,
+    #     Lambda_re_init=Lambda.real,
+    #     Lambda_im_init=Lambda.imag,
+    #     V=V,
+    #     Vinv=Vinv,
+    #     C_init=args.C_init,
+    #     discretization=args.discretization,
+    #     dt_min=args.dt_min,
+    #     dt_max=args.dt_max,
+    #     conj_sym=args.conj_sym,
+    #     clip_eigs=args.clip_eigs,
+    #     bidirectional=args.bidirectional,
+    #     q_config=q_config
+    # )
+    ssm_init_fn = shift_add_ssm.init_S5SSM(
         H=args.d_model,
         P=ssm_size,
         Lambda_re_init=Lambda.real,
@@ -61,22 +74,24 @@ def dynamical_ssm(args, seq_len, in_dim, init_rng) -> tuple:
         conj_sym=args.conj_sym,
         clip_eigs=args.clip_eigs,
         bidirectional=args.bidirectional,
-        q_config=q_config
+        use_B_shift=args.shift_add_b,
+        use_C_shift=args.shift_add_c,
+        use_D_shift=args.shift_add_d,
     )
 
     model_cls = partial(
-        qseq_model.QBatchRegressionModel,
+        shift_add_seq_model.ShiftAddBatchRegressionModel,
         ssm=ssm_init_fn,
         d_model=args.d_model,
         d_output=in_dim,
         n_layers=args.n_layers,
-        q_bits_aw=(q_config.non_ssm_act_precision, q_config.non_ssm_precision),
         activation=args.activation_fn,
         dropout=args.p_dropout,
         training=True,
         prenorm=args.prenorm,
         batchnorm=args.batchnorm,
         bn_momentum=args.bn_momentum,
+        use_MLP_shift=args.shift_add_mlp,
     )
 
     state = train_helpers.create_train_state(
