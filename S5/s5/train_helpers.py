@@ -479,6 +479,7 @@ def train_step(state,
 
     #if log_act_sparsity:
     if True:
+        mod_vars.keys
         act_sparsity_logs = jax.tree_util.tree_map(lambda x: _compute_act_sparsity(x), mod_vars["intermediates"])
     else:
         act_sparsity_logs = None
