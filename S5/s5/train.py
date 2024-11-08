@@ -20,18 +20,23 @@ def train(args):
     best_test_loss = 100000000
     best_test_acc = -10000.0
 
+    wandb_name = args.dataset + "_"
+    wandb_name += "B" + str(int(args.use_B_shift)) + "_" + "C" + str(int(args.use_C_shift)) + "_" 
+    wandb_name += "D" + str(int(args.use_D_shift)) + "_" + "MLP" + str(int(args.use_MLP_shift)) + "SD" +str(int(args.use_sigma_delta)) + "_"
+    wandb_name += "relu" + str(int(args.use_relu))
+
     if args.USE_WANDB:
         # Make wandb config dictionary
-        wandb.init(project=args.wandb_project, job_type='model_training', config=vars(args), entity=args.wandb_entity)
-    #else:
-    #    wandb.init(mode='offline')
+        wandb.init(project=args.wandb_project, job_type='model_training', config=vars(args), entity=args.wandb_entity, name=wandb_name)
+    else:
+        wandb.init(mode='offline')
 
     ssm_size = args.ssm_size_base
     ssm_lr = args.ssm_lr_base
 
     # determine the size of initial blocks
     block_size = int(ssm_size / args.blocks)
-    #wandb.log({"block_size": block_size})
+    wandb.log({"block_size": block_size})
 
     # Set global learning rate lr (e.g. encoders, etc.) as function of ssm_lr
     lr = args.lr_factor * ssm_lr
@@ -209,8 +214,8 @@ def train(args):
         #print(act_sparsities[1].keys())
         act_sparsity_logs = {f"act_sparsity/train/{k}": v for k, v in act_sparsities.items()}
         # NOTE: for now, just print the sparsity levels, later log them to W&B
-        # wandb.log(**act_sparsity_logs, step=step)
-        print(act_sparsity_logs)
+        wandb.log(**act_sparsity_logs, step=step)
+        #print(act_sparsity_logs)
 
         if valloader is not None:
             print(f"[*] Running Epoch {epoch + 1} Validation...")
@@ -304,7 +309,6 @@ def train(args):
             f"\tBest Test Loss: {best_test_loss:.5f} -- Best Test Accuracy:"
             f" {best_test_acc:.4f} at Epoch {best_epoch + 1}\n"
         )
-        """
         if valloader is not None:
             if speech:
                 wandb.log(
@@ -359,6 +363,6 @@ def train(args):
         wandb.run.summary["Best Epoch"] = best_epoch
         wandb.run.summary["Best Test Loss"] = best_test_loss
         wandb.run.summary["Best Test Accuracy"] = best_test_acc
-        """
+        
         if count > args.early_stop_patience:
             break
