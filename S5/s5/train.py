@@ -20,10 +20,10 @@ def train(args):
     best_test_loss = 100000000
     best_test_acc = -10000.0
 
-    wandb_name = args.dataset + "_"
+    wandb_name = str(args.jax_seed) + args.dataset + "_"
     wandb_name += "B" + str(int(args.use_B_shift)) + "_" + "C" + str(int(args.use_C_shift)) + "_" 
     wandb_name += "D" + str(int(args.use_D_shift)) + "_" + "MLP" + str(int(args.use_MLP_shift)) + "SD" +str(int(args.use_sigma_delta)) + "_"
-    wandb_name += "relu" + str(int(args.use_relu))
+    wandb_name += "relu" + str(int(args.use_relu)) + "_" + "act_fn" +  _ + args.activation_fn
 
     if args.USE_WANDB:
         # Make wandb config dictionary
@@ -363,6 +363,6 @@ def train(args):
         wandb.run.summary["Best Epoch"] = best_epoch
         wandb.run.summary["Best Test Loss"] = best_test_loss
         wandb.run.summary["Best Test Accuracy"] = best_test_acc
-        
+
         if count > args.early_stop_patience:
             break
