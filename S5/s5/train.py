@@ -213,12 +213,8 @@ def train(args):
         )
         #print(len(act_sparsities))
         #print(act_sparsities[1].keys())
-        act_sparsities = flatten(act_sparsities)
+        act_sparsities = flatten(act_sparsities, reducer='path')
         act_sparsity_logs = {f"act_sparsity/train/{k}": v[0] for k, v in act_sparsities.items()}
-        for k, v in act_sparsities.items():
-            print("k", k)
-            print("v", v)
-            print("______")
         # NOTE: for now, just print the sparsity levels, later log them to W&B
         wandb.log(act_sparsity_logs, step=step)
         #print(act_sparsity_logs)
