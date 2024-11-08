@@ -7,7 +7,7 @@ from flax.training import train_state
 from flax.core.frozen_dict import unfreeze
 import optax
 from typing import Any, Tuple
-from jax.flatten_util import flatten_pytree
+from jax.flatten_util import ravel_pytree as flatten_pytree
 
 
 def _compute_act_sparsity(act, atol=1e-6):
