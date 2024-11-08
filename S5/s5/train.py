@@ -205,8 +205,8 @@ def train(args):
             lr_params,
             log_act_sparsity=True,
         )
-        print(len(act_sparsities))
-        print(act_sparsities[1].keys())
+        #print(len(act_sparsities))
+        #print(act_sparsities[1].keys())
         act_sparsity_logs = {f"act_sparsity/train/{k}": v for k, v in act_sparsities.items()}
         # NOTE: for now, just print the sparsity levels, later log them to W&B
         # wandb.log(**act_sparsity_logs, step=step)
