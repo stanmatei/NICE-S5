@@ -187,28 +187,36 @@ class SequenceLayer(nn.Module):
                 self.sow("intermediates", "glu_x", x)
             else:
                 x = self.out1(x) * jax.nn.sigmoid(self.out2(x))
-                 self.sow("intermediates", "glu_x", x)
+                self.sow("intermediates", "glu_x", x)
             x = self.drop(x)
 
         elif self.activation in ["half_glu1"]:
             x = self.drop(self.pre_act(x))
+            self.sow("intermediates", "pre_act_x", x)  
             if self.use_sigma_delta:
                 x = self.delta(x)
+                self.sow("intermediates", "delta_x", x) # NOTE: records activation sparsity
                 out2 = jnp.cumsum(self.out2(x), axis = 0)
                 x = x * jax.nn.sigmoid(out2)
+                self.sow("intermediates", "glu_x", x)
             else:
                 x = x * jax.nn.sigmoid(self.out2(x))
+                self.sow("intermediates", "glu_x", x)
             x = self.drop(x)
 
         elif self.activation in ["half_glu2"]:
             # Only apply GELU to the gate input
             x1 = self.drop(self.pre_act(x))
+            self.sow("intermediates", "pre_act_x", x)  
             if self.use_sigma_delta:
                 x1 = self.delta(x1)
+                self.sow("intermediates", "delta_x", x1)  
                 out2 = jnp.cumsum(self.out2(x1), axis = 0)
                 x = x * jax.nn.sigmoid(out2)
+                self.sow("intermediates", "glu_x", x)
             else:
                 x = x * jax.nn.sigmoid(self.out2(x1))
+                self.sow("intermediates", "glu_x", x)
             x = self.drop(x)
             
         elif self.activation in ["gelu"]:
