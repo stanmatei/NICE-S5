@@ -27,6 +27,7 @@ def train(args):
 
     if args.USE_WANDB:
         # Make wandb config dictionary
+        wandb.login()
         wandb.init(project=args.wandb_project, job_type='model_training', config=vars(args), entity=args.wandb_entity, name=wandb_name)
     else:
         wandb.init(mode='offline')
