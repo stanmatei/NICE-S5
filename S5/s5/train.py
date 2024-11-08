@@ -22,12 +22,11 @@ def train(args):
 
     wandb_name = str(args.jax_seed) + args.dataset + "_"
     wandb_name += "B" + str(int(args.use_B_shift)) + "_" + "C" + str(int(args.use_C_shift)) + "_" 
-    wandb_name += "D" + str(int(args.use_D_shift)) + "_" + "MLP" + str(int(args.use_MLP_shift)) + "SD" +str(int(args.use_sigma_delta)) + "_"
-    wandb_name += "relu" + str(int(args.use_relu)) + "_" + "act_fn" + "_" + args.activation_fn
+    wandb_name += "D" + str(int(args.use_D_shift)) + "_" + "MLP" + str(int(args.use_MLP_shift)) + "_" + "SD" +str(int(args.use_sigma_delta)) + "_"
+    wandb_name += "relu" + str(int(args.use_relu)) + "_" + args.activation_fn
 
     if args.USE_WANDB:
         # Make wandb config dictionary
-        wandb.login()
         wandb.init(project=args.wandb_project, job_type='model_training', config=vars(args), entity=args.wandb_entity, name=wandb_name)
     else:
         wandb.init(mode='offline')
@@ -215,7 +214,7 @@ def train(args):
         #print(act_sparsities[1].keys())
         act_sparsity_logs = {f"act_sparsity/train/{k}": v for k, v in act_sparsities.items()}
         # NOTE: for now, just print the sparsity levels, later log them to W&B
-        wandb.log(**act_sparsity_logs, step=step)
+        wandb.log(act_sparsity_logs, step=step)
         #print(act_sparsity_logs)
 
         if valloader is not None:
