@@ -213,6 +213,7 @@ def train(args):
         #print(len(act_sparsities))
         #print(act_sparsities[1].keys())
         act_sparsity_logs = {f"act_sparsity/train/{k}": v for k, v in act_sparsities.items()}
+        print(act_sparsities["encoder.layers_4.glu_x"])
         # NOTE: for now, just print the sparsity levels, later log them to W&B
         wandb.log(act_sparsity_logs, step=step)
         #print(act_sparsity_logs)
