@@ -9,7 +9,7 @@ from typing import Any, Callable, Optional, Tuple
 #import aqt.jax.v2.flax.aqt_flax as aqt
 import jax
 import jax.numpy as jnp
-from .utils.quantization import q_dot_maybe, q_had_maybe
+#from .utils.quantization import q_dot_maybe, q_had_maybe
 from .utils.shift_add_utils import round_power_of_2, round_to_fixed
 
 def make_ste(f):
