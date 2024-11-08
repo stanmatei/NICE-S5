@@ -23,7 +23,7 @@ def train(args):
     wandb_name = str(args.jax_seed) + args.dataset + "_"
     wandb_name += "B" + str(int(args.use_B_shift)) + "_" + "C" + str(int(args.use_C_shift)) + "_" 
     wandb_name += "D" + str(int(args.use_D_shift)) + "_" + "MLP" + str(int(args.use_MLP_shift)) + "SD" +str(int(args.use_sigma_delta)) + "_"
-    wandb_name += "relu" + str(int(args.use_relu)) + "_" + "act_fn" +  _ + args.activation_fn
+    wandb_name += "relu" + str(int(args.use_relu)) + "_" + "act_fn" + "_" + args.activation_fn
 
     if args.USE_WANDB:
         # Make wandb config dictionary
