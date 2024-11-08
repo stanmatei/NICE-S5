@@ -416,7 +416,7 @@ def train_epoch(state, rng, model, trainloader, seq_len, in_dim, batchnorm, lr_p
         is_leaf_fn = lambda node: isinstance(node, dict) and '__call__' in node
         act_sparsities = jax.tree.map(clean_up_fn, act_sparsities, is_leaf=is_leaf_fn)
         # flatten
-        act_sparsities = flatten_pytree(act_sparsities)
+        #act_sparsities = flatten_pytree(act_sparsities)
 
     # Return average loss over batches
     return state, np.mean(np.array(batch_losses)), step, act_sparsities
