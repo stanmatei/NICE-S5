@@ -10,6 +10,7 @@ from .dataloading import Datasets
 from .shift_add_seq_model import BatchClassificationModel, RetrievalModel
 from .shift_add_ssm import init_S5SSM
 from .ssm_init import make_DPLR_HiPPO
+from flatten_dict import flatten
 
 
 def train(args):
@@ -212,10 +213,12 @@ def train(args):
         )
         #print(len(act_sparsities))
         #print(act_sparsities[1].keys())
-        act_sparsity_logs = {f"act_sparsity/train/{k}": v for k, v in act_sparsities.items()}
+        flatten(act_sparsities)
+        act_sparsity_logs = {f"act_sparsity/train/{k}": v[0] for k, v in act_sparsities.items()}
         for k, v in act_sparsities.items():
+            for layer in v:
             print("k", k)
-            print("v", v)
+            print("v", v[0])
             print("______")
         # NOTE: for now, just print the sparsity levels, later log them to W&B
         wandb.log(act_sparsity_logs, step=step)
