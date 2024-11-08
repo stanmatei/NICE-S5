@@ -82,7 +82,7 @@ class DeltaLayer(nn.Module):
         x_roll = jnp.roll(x, 1, axis = 0)
         x_roll = x_roll.at[0, :].set(0.)
         delta = x - x_roll
-        #delta = nn.relu(delta - thr) - nn.relu(-delta - thr)
+        #delta = thr + nn.relu(delta - thr) - nn.relu(-delta - thr)
         return delta
 
 class PreAct(nn.Module):
