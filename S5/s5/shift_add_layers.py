@@ -6,7 +6,7 @@ from flax.linen.module import Module, compact
 from flax.linen.normalization import _canonicalize_axes, _abs_sq
 from flax.typing import Array, PRNGKey, Dtype, Shape, Axes
 from typing import Any, Callable, Optional, Tuple
-import aqt.jax.v2.flax.aqt_flax as aqt
+#import aqt.jax.v2.flax.aqt_flax as aqt
 import jax
 import jax.numpy as jnp
 from .utils.quantization import q_dot_maybe, q_had_maybe
