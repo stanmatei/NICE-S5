@@ -7,6 +7,7 @@ from flax.training import train_state
 from flax.core.frozen_dict import unfreeze
 import optax
 from typing import Any, Tuple
+from fax.flatten_util improt flatten_pytree
 
 
 def _compute_act_sparsity(act, atol=1e-6):
@@ -478,7 +479,7 @@ def train_step(state,
     (loss, (mod_vars, logits)), grads = jax.value_and_grad(loss_fn, has_aux=True)(state.params)
 
     #if log_act_sparsity:
-    if True:
+    if True: #TODO fix if statement
         act_sparsity_logs = jax.tree_util.tree_map(lambda x: _compute_act_sparsity(x), mod_vars["intermediates"])
     else:
         act_sparsity_logs = None
