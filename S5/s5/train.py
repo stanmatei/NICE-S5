@@ -24,7 +24,7 @@ def train(args):
     wandb_name = str(args.jax_seed) + args.dataset + "_"
     wandb_name += "B" + str(int(args.use_B_shift)) + "_" + "C" + str(int(args.use_C_shift)) + "_" 
     wandb_name += "D" + str(int(args.use_D_shift)) + "_" + "MLP" + str(int(args.use_MLP_shift)) + "_" + "SD" +str(int(args.use_sigma_delta)) + "_"
-    wandb_name += "relu" + str(int(args.use_relu)) + "_" + args.activation_fn
+    wandb_name += "relu" + str(int(args.use_relu)) + "_" + args.activation_fn + "_" + "thr" + str(args.delta_thr)
 
     if args.USE_WANDB:
         # Make wandb config dictionary
@@ -134,7 +134,8 @@ def train(args):
             bn_momentum=args.bn_momentum,
             use_MLP_shift=args.use_MLP_shift,
             use_sigma_delta=args.use_sigma_delta,
-            use_relu=args.use_relu
+            use_relu=args.use_relu,
+            thr=args.delta_thr
         )
 
     else:
@@ -153,7 +154,8 @@ def train(args):
             bn_momentum=args.bn_momentum,
             use_MLP_shift=args.use_MLP_shift,
             use_sigma_delta=args.use_sigma_delta,
-            use_relu=args.use_relu
+            use_relu=args.use_relu,
+            thr=args.delta_thr
         )
 
     # initialize training state
@@ -211,6 +213,7 @@ def train(args):
             lr_params,
             log_act_sparsity=True,
         )
+
         #print(len(act_sparsities))
         #print(act_sparsities[1].keys())
         act_sparsities = flatten(act_sparsities, reducer='path')

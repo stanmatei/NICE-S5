@@ -12,3 +12,4 @@ pip install optax wandb tqdm einops flax
 pip install torchtext==0.16 torchaudio==2.1 torchvision==0.16
 pip install torch
 pip install datasets tensorflow-datasets
+pip install flatten-dict
