@@ -109,12 +109,20 @@ class ShiftLinearLayer(nn.Module):
 
 class DeltaLayer(nn.Module):
     thr: float = 0.0
+    adaptive: bool = False
+    beta: float = 0.75
     @nn.compact
     def __call__(self, x):
         x_roll = jnp.roll(x, 1, axis = 0)
         x_roll = x_roll.at[0, :].set(0.)
         delta = x - x_roll
-        delta = (delta > self.thr) * delta + (delta < -self.thr) * delta
+        if not self.adaptive:
+            delta = (delta > self.thr) * delta + (delta < -self.thr) * delta
+        else:
+            thr = jnp.max(jnp.abs(delta), axis = -1) * self.beta
+            thr = jnp.expand_dims(thr, -1)
+            delta = (delta > self.thr) * delta + (delta < -self.thr) * delta
+
         return delta
 
 class PreAct(nn.Module):
@@ -157,6 +165,7 @@ class SequenceLayer(nn.Module):
     use_relu: bool = False
     thr: float = 0.0
     use_gating: bool = False
+    adaptive_thr: bool = False
 
     def setup(self):
         """Initializes the ssm, batch/layer norm and dropout
@@ -187,7 +196,7 @@ class SequenceLayer(nn.Module):
         else:
             self.norm = nn.LayerNorm()
 
-        self.delta = DeltaLayer(thr=self.thr)
+        self.delta = DeltaLayer(thr=self.thr, adaptive = True)
 
         self.drop = nn.Dropout(
             self.dropout,
