@@ -44,22 +44,7 @@ def dynamical_ssm(args, seq_len, in_dim, init_rng) -> tuple:
     Lambda = (Lambda * jnp.ones((args.blocks, block_size))).ravel()
     V = jax.scipy.linalg.block_diag(*([V] * args.blocks))
     Vinv = jax.scipy.linalg.block_diag(*([Vc] * args.blocks))
-    # ssm_init_fn = qssm_aqt.init_qS5SSM(
-    #     H=args.d_model,
-    #     P=ssm_size,
-    #     Lambda_re_init=Lambda.real,
-    #     Lambda_im_init=Lambda.imag,
-    #     V=V,
-    #     Vinv=Vinv,
-    #     C_init=args.C_init,
-    #     discretization=args.discretization,
-    #     dt_min=args.dt_min,
-    #     dt_max=args.dt_max,
-    #     conj_sym=args.conj_sym,
-    #     clip_eigs=args.clip_eigs,
-    #     bidirectional=args.bidirectional,
-    #     q_config=q_config
-    # )
+    
     ssm_init_fn = shift_add_ssm.init_S5SSM(
         H=args.d_model,
         P=ssm_size,

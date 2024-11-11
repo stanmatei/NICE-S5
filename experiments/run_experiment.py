@@ -19,7 +19,9 @@ def smape(x, y):
 
 def run(args):
     # Setup logging
-    wandb.init(project="NICE-S5", entity="rug-minds", config=vars(args))
+    shift_add_params = f"b{args.shift_add_b:01}_c{args.shift_add_c:01}_d{args.shift_add_d:01}_mlp{args.shift_add_mlp:01}"
+    name = f"{args.experiment}_{args.tau} {shift_add_params} {args.activation_fn}"
+    wandb.init(project="NICE-S5", entity="rug-minds",name=name,config=vars(args))
 
     # Set randomness...
     print("[*] Setting Randomness...")
@@ -204,7 +206,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--activation_fn",
-        default="gelu",
+        default="full_glu",
         type=str,
         choices=["full_glu", "half_glu1", "half_glu2", "gelu"],
     )
