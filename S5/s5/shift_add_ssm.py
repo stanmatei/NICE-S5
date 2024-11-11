@@ -89,7 +89,7 @@ def apply_shift_add_ssm(Lambda_bar, B_bar, C_tilde, input_sequence, conj_sym, bi
 
     if C_shift is not None:
         if conj_sym:
-            return jax.vmap(lambda x: C_shift(x).real)(xs)
+            return jax.vmap(lambda x: 2*C_shift(x).real)(xs)
         else:
             return jax.vmap(lambda x: C_shift(x).real)(xs)
     else:
