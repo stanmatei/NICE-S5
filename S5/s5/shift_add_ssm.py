@@ -150,6 +150,7 @@ class S5SSM(nn.Module):
     use_B_shift: bool = False
     use_C_shift: bool = False
     use_D_shift: bool = False 
+    use_gating: bool = False
 
     """ The S5 SSM
         Args:
@@ -273,17 +274,17 @@ class S5SSM(nn.Module):
             raise NotImplementedError("Discretization method {} not implemented".format(self.discretization))
 
         if self.use_B_shift:
-            self.B_shift = ShiftLinearLayer(self.B_bar, use_complex=True)
+            self.B_shift = ShiftLinearLayer(self.B_bar, use_complex=True, use_gating=self.use_gating)
         else:
             self.B_shift = None
         
         if self.use_C_shift:
-            self.C_shift = ShiftLinearLayer(self.C_tilde, use_complex=True)
+            self.C_shift = ShiftLinearLayer(self.C_tilde, use_complex=True, use_gating=self.use_gating)
         else:
             self.C_shift = None
 
         if self.use_D_shift:
-            self.D_shift = ShiftLinearLayer(self.D, hadamard = True)
+            self.D_shift = ShiftLinearLayer(self.D, hadamard = True, use_gating=self.use_gating)
         else:
             self.D_shift = None
 
@@ -331,7 +332,8 @@ def init_S5SSM(H,
                bidirectional, 
                use_B_shift,
                use_C_shift, 
-               use_D_shift
+               use_D_shift,
+               use_gating
                ):
     """Convenience function that will be used to initialize the SSM.
        Same arguments as defined in S5SSM above."""
@@ -351,4 +353,5 @@ def init_S5SSM(H,
                    bidirectional=bidirectional,
                    use_B_shift=use_B_shift, 
                    use_C_shift=use_C_shift,
-                   use_D_shift=use_D_shift)
+                   use_D_shift=use_D_shift,
+                   use_gating=use_gating)

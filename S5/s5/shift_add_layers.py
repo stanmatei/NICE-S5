@@ -30,6 +30,7 @@ class ShiftLinearLayer(nn.Module):
   fraction_bits: int = 16
   integer_bits: int = 16
   use_complex: bool = False
+  use_gating: bool = False
   
   @nn.compact
   def __call__(self, x):
@@ -48,24 +49,55 @@ class ShiftLinearLayer(nn.Module):
     else:
       b = None
 
-    if self.use_complex:
-        # TODO: consider coordinate-dependent transformations?
-        w_imag_rounded = round_power_of_2_ste(jnp.imag(w))
-        w_real_rounded = round_power_of_2_ste(jnp.real(w))
-        w_rounded = w_real_rounded + 1j * w_imag_rounded
+    if not self.use_gating:
+        if self.use_complex:
+            # TODO: consider coordinate-dependent transformations?
+            w_imag_rounded = round_power_of_2_ste(jnp.imag(w))
+            w_real_rounded = round_power_of_2_ste(jnp.real(w))
+            w_rounded = w_real_rounded + 1j * w_imag_rounded
 
-        x_imag_rounded = round_to_fixed_ste(jnp.imag(x))
-        x_real_rounded = round_to_fixed_ste(jnp.real(x))
-        x_rounded =  x_real_rounded + 1j * x_imag_rounded
-    
-    else:
-        w_rounded = round_power_of_2_ste(w)
-        x_rounded = round_to_fixed_ste(x)
-    
-    if self.hadamard:
-      x = x_rounded * w_rounded
-    else:
-      x = jnp.matmul(x_rounded, w_rounded.T)
+            x_imag_rounded = round_to_fixed_ste(jnp.imag(x))
+            x_real_rounded = round_to_fixed_ste(jnp.real(x))
+            x_rounded =  x_real_rounded + 1j * x_imag_rounded
+        else:
+            w_rounded = round_power_of_2_ste(w)
+            x_rounded = round_to_fixed_ste(x)
+        
+        if self.hadamard:
+            x = x_rounded * w_rounded
+        else:
+            x = jnp.matmul(x_rounded, w_rounded.T)
+
+    else: 
+        if self.use_complex:
+            # TODO: consider coordinate-dependent transformations?
+            w_imag_rounded = round_power_of_2_ste(jnp.imag(w))
+            w_real_rounded = round_power_of_2_ste(jnp.real(w))
+            w_rounded = w_real_rounded + 1j * w_imag_rounded
+
+            x_imag_rounded = round_to_fixed_ste(jnp.imag(x))
+            x_real_rounded = round_to_fixed_ste(jnp.real(x))
+            x_rounded =  x_real_rounded + 1j * x_imag_rounded
+
+            w_gate_imag = round_to_fixed_ste(jnp.imag(w))
+            w_gate_real = round_to_fixed_ste(jnp.real(w))
+            w_gate = w_gate_real + 1j * w_gate_imag
+
+            x_gate_imag = round_power_of_2_ste(jnp.imag(x))
+            x_gate_real = round_power_of_2_ste(jnp.real(x))
+            x_gate = x_gate_real + 1j *x_gate_imag
+
+        else:
+            w_rounded = round_power_of_2_ste(w)
+            x_rounded = round_to_fixed_ste(x)
+
+            w_gate = round_to_fixed_ste(w)
+            x_gate = round_power_of_2_ste(x)
+        
+        if self.hadamard:
+            x = (x_rounded * w_rounded + x_gate * w_gate) / 2
+        else:
+            x = (jnp.matmul(x_rounded, w_rounded.T) + jnp.matmul(x_gate, w_gate.T)) / 2
 
     if b is not None:
       b_rounded = round_to_fixed_ste(b)
@@ -124,6 +156,7 @@ class SequenceLayer(nn.Module):
     use_sigma_delta: bool = False
     use_relu: bool = False
     thr: float = 0.0
+    use_gating: bool = False
 
     def setup(self):
         """Initializes the ssm, batch/layer norm and dropout
@@ -137,10 +170,10 @@ class SequenceLayer(nn.Module):
 
         if self.use_MLP_shift:
             if self.activation in ["full_glu"]:
-                self.out1 = ShiftLinearLayer(use_bias = True)
-                self.out2 = ShiftLinearLayer(use_bias = True)
+                self.out1 = ShiftLinearLayer(use_bias = True, use_gating = self.use_gating)
+                self.out2 = ShiftLinearLayer(use_bias = True, use_gating = self.use_gating)
             elif self.activation in ["half_glu1", "half_glu2"]:
-                self.out2 = ShiftLinearLayer(use_bias = True)
+                self.out2 = ShiftLinearLayer(use_bias = True, use_gating = self.use_gating)
         else:
             if self.activation in ["full_glu"]:
                 self.out1 = nn.Dense(self.d_model)

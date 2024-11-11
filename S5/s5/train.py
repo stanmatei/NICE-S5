@@ -24,7 +24,8 @@ def train(args):
     wandb_name = str(args.jax_seed) + args.dataset + "_"
     wandb_name += "B" + str(int(args.use_B_shift)) + "_" + "C" + str(int(args.use_C_shift)) + "_" 
     wandb_name += "D" + str(int(args.use_D_shift)) + "_" + "MLP" + str(int(args.use_MLP_shift)) + "_" + "SD" +str(int(args.use_sigma_delta)) + "_"
-    wandb_name += "relu" + str(int(args.use_relu)) + "_" + args.activation_fn + "_" + "thr" + str(args.delta_thr) + "_" + "l" +str(args.n_layers)
+    wandb_name += "relu" + str(int(args.use_relu)) + "_" + args.activation_fn + "_" + "thr" + str(args.delta_thr) + "_" + "l" +str(args.n_layers) + "_"
+    wandb_name += "gate" + str(int(args.use_gating))
 
     if args.USE_WANDB:
         # Make wandb config dictionary
@@ -114,7 +115,8 @@ def train(args):
                              bidirectional=args.bidirectional,
                              use_B_shift=args.use_B_shift,
                              use_C_shift=args.use_C_shift,
-                             use_D_shift=args.use_D_shift
+                             use_D_shift=args.use_D_shift,
+                             use_gating=args.use_gating
                              )
 
     if retrieval:
@@ -135,7 +137,8 @@ def train(args):
             use_MLP_shift=args.use_MLP_shift,
             use_sigma_delta=args.use_sigma_delta,
             use_relu=args.use_relu,
-            thr=args.delta_thr
+            thr=args.delta_thr,
+            use_gating=args.use_gating
         )
 
     else:
@@ -155,7 +158,8 @@ def train(args):
             use_MLP_shift=args.use_MLP_shift,
             use_sigma_delta=args.use_sigma_delta,
             use_relu=args.use_relu,
-            thr=args.delta_thr
+            thr=args.delta_thr,
+            use_gating=args.use_gating
         )
 
     # initialize training state

@@ -35,6 +35,7 @@ class StackedEncoderModel(nn.Module):
     use_sigma_delta: bool = False
     use_relu: bool = False
     thr: float = 0
+    use_gating: bool = False
 
     def setup(self):
         """
@@ -55,7 +56,8 @@ class StackedEncoderModel(nn.Module):
                 use_MLP_shift=self.use_MLP_shift,
                 use_sigma_delta=self.use_sigma_delta,
                 use_relu=self.use_relu,
-                thr=self.thr
+                thr=self.thr,
+                use_gating=self.use_gating
             )
             for _ in range(self.n_layers)
         ]
@@ -135,6 +137,7 @@ class ClassificationModel(nn.Module):
     use_sigma_delta: bool = False
     use_relu: bool = False
     thr:float = 0
+    use_gating: bool = False
 
     def setup(self):
         """
@@ -154,7 +157,8 @@ class ClassificationModel(nn.Module):
                             use_MLP_shift=self.use_MLP_shift,
                             use_sigma_delta=self.use_sigma_delta,
                             use_relu=self.use_relu,
-                            thr=self.thr
+                            thr=self.thr,
+                            use_gating=self.use_gating
                                         )
         self.decoder = nn.Dense(self.d_output)
 
@@ -273,6 +277,7 @@ class RetrievalModel(nn.Module):
     use_sigma_delta: bool = False
     use_relu: bool = False
     thr: float = 0
+    use_gating: bool = False
 
     def setup(self):
         """
@@ -302,7 +307,8 @@ class RetrievalModel(nn.Module):
                             use_MLP_shift=self.use_MLP_shift,
                             use_sigma_delta=self.use_sigma_delta,
                             use_relu=self.use_relu,
-                            thr=self.thr
+                            thr=self.thr, 
+                            use_gating=self.use_gating
                                         )
         BatchRetrievalDecoder = nn.vmap(
             RetrievalDecoder,
@@ -359,6 +365,7 @@ class ShiftAddRegressionModel(nn.Module):
     use_sigma_delta: bool = False
     use_relu: bool = False
     thr: float = 0
+    use_gating: bool = False
 
     def setup(self):
         """
@@ -378,7 +385,8 @@ class ShiftAddRegressionModel(nn.Module):
                             use_MLP_shift=self.use_MLP_shift,
                             use_sigma_delta=self.use_sigma_delta,
                             use_relu=self.use_relu,
-                            thr=self.thr
+                            thr=self.thr,
+                            use_gating=self.use_gating
         )
         # NOTE: nn.Dense calls dot_general(activation, weights)
         self.decoder = nn.Dense(self.d_output)

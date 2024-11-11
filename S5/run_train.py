@@ -61,6 +61,8 @@ if __name__ == "__main__":
 						help="whether to use ReLU in the feature mixing layer")
 	parser.add_argument("--delta_thr", type=float, default=False,
 						help="threshold for Sigma Delta")					
+	parser.add_argument("--use_gating", type=str2bool, default=False,
+						help="whether to use gating in shift add layers")	
 
 	parser.add_argument("--bidirectional", type=str2bool, default=False,
 						help="whether to use bidirectional model")
