@@ -166,6 +166,7 @@ class SequenceLayer(nn.Module):
     thr: float = 0.0
     use_gating: bool = False
     adaptive_thr: bool = False
+    beta: float = 0.75
 
     def setup(self):
         """Initializes the ssm, batch/layer norm and dropout
@@ -196,7 +197,7 @@ class SequenceLayer(nn.Module):
         else:
             self.norm = nn.LayerNorm()
 
-        self.delta = DeltaLayer(thr=self.thr, adaptive = True)
+        self.delta = DeltaLayer(thr=self.thr, adaptive = self.adaptive_thr, beta = self.beta)
 
         self.drop = nn.Dropout(
             self.dropout,

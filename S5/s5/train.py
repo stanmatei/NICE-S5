@@ -25,7 +25,7 @@ def train(args):
     wandb_name += "B" + str(int(args.use_B_shift)) + "_" + "C" + str(int(args.use_C_shift)) + "_" 
     wandb_name += "D" + str(int(args.use_D_shift)) + "_" + "MLP" + str(int(args.use_MLP_shift)) + "_" + "SD" +str(int(args.use_sigma_delta)) + "_"
     wandb_name += "relu" + str(int(args.use_relu)) + "_" + args.activation_fn + "_" + "thr" + str(args.delta_thr) + "_" + "l" +str(args.n_layers) + "_"
-    wandb_name += "gate" + str(int(args.use_gating))
+    wandb_name += "gate" + str(int(args.use_gating)) + "_" + "beta" + str(args.beta) + "_" + "adp" + str(int(args.adaptive_thr))
 
     if args.USE_WANDB:
         # Make wandb config dictionary
@@ -138,7 +138,9 @@ def train(args):
             use_sigma_delta=args.use_sigma_delta,
             use_relu=args.use_relu,
             thr=args.delta_thr,
-            use_gating=args.use_gating
+            use_gating=args.use_gating,
+            adaptive_thr=args.adaptive_thr,
+            beta=args.beta
         )
 
     else:
@@ -159,7 +161,9 @@ def train(args):
             use_sigma_delta=args.use_sigma_delta,
             use_relu=args.use_relu,
             thr=args.delta_thr,
-            use_gating=args.use_gating
+            use_gating=args.use_gating,
+            adaptive_thr=args.adaptive_thr,
+            beta=args.beta
         )
 
     # initialize training state

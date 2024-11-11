@@ -63,6 +63,11 @@ if __name__ == "__main__":
 						help="threshold for Sigma Delta")					
 	parser.add_argument("--use_gating", type=str2bool, default=False,
 						help="whether to use gating in shift add layers")	
+	parser.add_argument("--adaptive_thr", type=str2bool, default=False,
+						help="whether to use adaptive threshold for Sigma Delta")		
+	parser.add_argument("--beta", type=float, default=0.75,
+						help="scaling factor for adaptive threshold in Sigma Delta")		
+	
 
 	parser.add_argument("--bidirectional", type=str2bool, default=False,
 						help="whether to use bidirectional model")

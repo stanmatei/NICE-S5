@@ -36,6 +36,8 @@ class StackedEncoderModel(nn.Module):
     use_relu: bool = False
     thr: float = 0
     use_gating: bool = False
+    adaptive_thr: bool = False
+    beta: float = 0.75
 
     def setup(self):
         """
@@ -57,7 +59,9 @@ class StackedEncoderModel(nn.Module):
                 use_sigma_delta=self.use_sigma_delta,
                 use_relu=self.use_relu,
                 thr=self.thr,
-                use_gating=self.use_gating
+                use_gating=self.use_gating,
+                adaptive_thr=self.adaptive_thr,
+                beta=self.beta
             )
             for _ in range(self.n_layers)
         ]
@@ -138,6 +142,8 @@ class ClassificationModel(nn.Module):
     use_relu: bool = False
     thr:float = 0
     use_gating: bool = False
+    adaptive_thr: bool = False
+    beta: float = 0.75
 
     def setup(self):
         """
@@ -158,7 +164,9 @@ class ClassificationModel(nn.Module):
                             use_sigma_delta=self.use_sigma_delta,
                             use_relu=self.use_relu,
                             thr=self.thr,
-                            use_gating=self.use_gating
+                            use_gating=self.use_gating,
+                            adaptive_thr=self.adaptive_thr,
+                            beta=self.beta
                                         )
         self.decoder = nn.Dense(self.d_output)
 
@@ -278,6 +286,8 @@ class RetrievalModel(nn.Module):
     use_relu: bool = False
     thr: float = 0
     use_gating: bool = False
+    adaptive_thr: bool = False
+    beta: float = 0.75
 
     def setup(self):
         """
@@ -308,7 +318,9 @@ class RetrievalModel(nn.Module):
                             use_sigma_delta=self.use_sigma_delta,
                             use_relu=self.use_relu,
                             thr=self.thr, 
-                            use_gating=self.use_gating
+                            use_gating=self.use_gating, 
+                            adaptive_thr = self.adaptive_thr,
+                            beta=self.beta
                                         )
         BatchRetrievalDecoder = nn.vmap(
             RetrievalDecoder,
@@ -366,6 +378,8 @@ class ShiftAddRegressionModel(nn.Module):
     use_relu: bool = False
     thr: float = 0
     use_gating: bool = False
+    adaptive_thr: bool = False
+    beta: float = 0.75
 
     def setup(self):
         """
@@ -386,7 +400,9 @@ class ShiftAddRegressionModel(nn.Module):
                             use_sigma_delta=self.use_sigma_delta,
                             use_relu=self.use_relu,
                             thr=self.thr,
-                            use_gating=self.use_gating
+                            use_gating=self.use_gating, 
+                            adaptive_thr=self.adaptive_thr,
+                            beta=self.beta
         )
         # NOTE: nn.Dense calls dot_general(activation, weights)
         self.decoder = nn.Dense(self.d_output)
