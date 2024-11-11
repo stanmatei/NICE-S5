@@ -62,6 +62,7 @@ def dynamical_ssm(args, seq_len, in_dim, init_rng) -> tuple:
         use_B_shift=args.shift_add_b,
         use_C_shift=args.shift_add_c,
         use_D_shift=args.shift_add_d,
+        use_gating=False
     )
 
     model_cls = partial(
