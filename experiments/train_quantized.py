@@ -4,6 +4,8 @@ sys.path.append("../S5")
 
 import jax
 
+from flatten_dict import flatten
+
 import wandb
 
 from s5.train_helpers import (
@@ -79,7 +81,7 @@ def train(
         )
 
         train_rng, skey = jax.random.split(train_rng)
-        state, train_loss, step = train_epoch(
+        state, train_loss, step, act_sparsities = train_epoch(
             state,
             skey,
             model_cls,
@@ -90,6 +92,9 @@ def train(
             lr_params=lr_params,
             loss_fn=loss_fn,
         )
+        # act_sparsities = flatten(act_sparsities, reducer='path')
+        # act_sparsity_logs = {f"act_sparsity/train/{k}": v[0] for k, v in act_sparsities.items()}
+        # wandb.log(act_sparsity_logs, step=step)
 
         if valloader is not None:
             print(f"[*] Running Epoch {epoch + 1} Validation...")
@@ -179,6 +184,7 @@ def train(
                 "ssm_lr": state.opt_state.inner_states["ssm"].inner_state.hyperparams[
                     "learning_rate"
                 ],
+                
             }
         )
 
