@@ -121,7 +121,7 @@ class DeltaLayer(nn.Module):
         else:
             thr = jnp.max(jnp.abs(delta), axis = -1) * self.beta
             thr = jnp.expand_dims(thr, -1)
-            delta = (delta > self.thr) * delta + (delta < -self.thr) * delta
+            delta = (delta > thr) * delta + (delta < -thr) * delta
 
         return delta
 
