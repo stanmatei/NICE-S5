@@ -13,15 +13,18 @@ import dataloaders
 from s5.utils.util import str2bool
 from train_quantized import train
 
+
 def smape(x, y):
     """Symmetric mean absolute percentage error"""
     return 200 * jnp.mean(jnp.abs(x - y) / (jnp.abs(x) + jnp.abs(y)))
 
+
 def run(args):
     # Setup logging
-    shift_add_params = f"b{args.shift_add_b:01}_c{args.shift_add_c:01}_d{args.shift_add_d:01}_mlp{args.shift_add_mlp:01}"
+    #                    b1c1d1mlp1relu10.50
+    shift_add_params = f"b{args.shift_add_b:01}c{args.shift_add_c:01}d{args.shift_add_d:01}mlp{args.shift_add_mlp:01}relu{args.sparse_relu:01}/{args.beta:.2f}"
     name = f"{args.experiment}_{args.tau} {shift_add_params} {args.activation_fn}"
-    wandb.init(project="NICE-S5", entity="rug-minds",name=name,config=vars(args))
+    wandb.init(project="NICE-S5", entity="rug-minds", name=name, config=vars(args))
 
     # Set randomness...
     print("[*] Setting Randomness...")
@@ -52,9 +55,14 @@ def run(args):
     elif args.experiment == "mackey_glass":
         from dynamical.model import dynamical_ssm
 
-
         # modify this to be a loop over the various tau values and their directories.
-        data_path = pathlib.Path(__file__).parent / "dynamical" / "data" / "MackeyGlass" / f"{args.tau}"
+        data_path = (
+            pathlib.Path(__file__).parent
+            / "dynamical"
+            / "data"
+            / "MackeyGlass"
+            / f"{args.tau}"
+        )
         (
             trainloader,
             valloader,
@@ -70,7 +78,7 @@ def run(args):
 
         args.d_model = in_dim
         model, state = dynamical_ssm(args, seq_len, in_dim, init_rng)
-        loss_fn = smape # Symmetric mean absolute percent error
+        loss_fn = smape  # Symmetric mean absolute percent error
 
     else:
         raise NotImplementedError()
@@ -88,15 +96,19 @@ def run(args):
         loss_fn=loss_fn,
     )
 
+
 def int_or_none(value):
     try:
         return int(value)
     except:
         return None
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--experiment", type=str, choices=["lorenz", "dynamical_all", "mackey_glass"])
+    parser.add_argument(
+        "--experiment", type=str, choices=["lorenz", "dynamical_all", "mackey_glass"]
+    )
     parser.add_argument("--tau", type=str, default=None)
 
     # Quant flags
@@ -156,8 +168,12 @@ if __name__ == "__main__":
         default=1.0,
         help="factor to decay learning rate for lr_decay_on_val_plateau",
     )
-    parser.add_argument("--cosine_anneal", type=str2bool, default=True,
-						help="whether to use cosine annealing schedule")
+    parser.add_argument(
+        "--cosine_anneal",
+        type=str2bool,
+        default=True,
+        help="whether to use cosine annealing schedule",
+    )
     parser.add_argument(
         "--weight_decay", type=float, default=0.05, help="weight decay value"
     )
@@ -234,6 +250,19 @@ if __name__ == "__main__":
         default=False,
         help="Treat timescale parameter as global parameter or SSM parameter",
     )
+    parser.add_argument(
+        "--use_relu",
+        type=str2bool,
+        default=True,
+        help="whether to use ReLU in the feature mixing layer",
+    )
+    parser.add_argument(
+        "--sparse_relu",
+        type=str2bool,
+        default=True,
+        help="whether to use sparse ReLU in the feature mixing layer",
+    )
+    parser.add_argument("--beta", type=float, default=0.0, help="beta for beta-relu")
 
     parser.add_argument("--bsz", type=int, default=64, help="batch size")
     parser.add_argument("--jax_seed", type=int, default=1337, help="seed randomness")

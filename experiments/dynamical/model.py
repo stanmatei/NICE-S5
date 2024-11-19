@@ -44,7 +44,7 @@ def dynamical_ssm(args, seq_len, in_dim, init_rng) -> tuple:
     Lambda = (Lambda * jnp.ones((args.blocks, block_size))).ravel()
     V = jax.scipy.linalg.block_diag(*([V] * args.blocks))
     Vinv = jax.scipy.linalg.block_diag(*([Vc] * args.blocks))
-    
+
     ssm_init_fn = shift_add_ssm.init_S5SSM(
         H=args.d_model,
         P=ssm_size,
@@ -62,7 +62,7 @@ def dynamical_ssm(args, seq_len, in_dim, init_rng) -> tuple:
         use_B_shift=args.shift_add_b,
         use_C_shift=args.shift_add_c,
         use_D_shift=args.shift_add_d,
-        use_gating=False
+        use_gating=False,
     )
 
     model_cls = partial(
@@ -78,6 +78,9 @@ def dynamical_ssm(args, seq_len, in_dim, init_rng) -> tuple:
         batchnorm=args.batchnorm,
         bn_momentum=args.bn_momentum,
         use_MLP_shift=args.shift_add_mlp,
+        use_relu=args.use_relu,
+        sparse_relu=args.sparse_relu,
+        beta=args.beta,
     )
 
     state = train_helpers.create_train_state(
