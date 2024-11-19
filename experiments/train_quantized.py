@@ -91,10 +91,12 @@ def train(
             batchnorm=args.batchnorm,
             lr_params=lr_params,
             loss_fn=loss_fn,
+            log_act_sparsity=True
         )
-        # act_sparsities = flatten(act_sparsities, reducer='path')
-        # act_sparsity_logs = {f"act_sparsity/train/{k}": v[0] for k, v in act_sparsities.items()}
-        # wandb.log(act_sparsity_logs, step=step)
+        print(act_sparsities)
+        act_sparsities = flatten(act_sparsities, reducer='path')
+        act_sparsity_logs = {f"act_sparsity/train/{k}": v[0] for k, v in act_sparsities.items()}
+        wandb.log(act_sparsity_logs, step=step)
 
         if valloader is not None:
             print(f"[*] Running Epoch {epoch + 1} Validation...")
