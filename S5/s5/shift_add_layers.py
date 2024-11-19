@@ -127,12 +127,19 @@ class DeltaLayer(nn.Module):
 
 class PreAct(nn.Module):
     act: str = "relu"
+    sparse: bool = False
+    beta: float = 0.75
     @nn.compact
     def __call__(self, x):
         if self.act == "relu":
-            return nn.relu(x)
+            x = nn.relu(x)
         elif self.act == "gelu":
-            return nn.gelu(x)
+            x = nn.gelu(x)
+        if self.sparse:
+            thr = jnp.max(jnp.abs(x), axis = -1) * self.beta
+            thr = jnp.expand_dims(thr, -1)
+            x = (x > thr) * x + (x < -thr) * x
+        return x
 
 class SequenceLayer(nn.Module):
     """ Defines a single S5 layer, with S5 SSM, nonlinearity,
@@ -167,6 +174,7 @@ class SequenceLayer(nn.Module):
     use_gating: bool = False
     adaptive_thr: bool = False
     beta: float = 0.75
+    sparse_relu: bool = False
 
     def setup(self):
         """Initializes the ssm, batch/layer norm and dropout
@@ -174,9 +182,9 @@ class SequenceLayer(nn.Module):
         self.seq = self.ssm()
 
         if self.use_relu:
-            self.pre_act = PreAct()
+            self.pre_act = PreAct(sparse=self.sparse_relu)
         else:
-            self.pre_act = PreAct(act = "gelu")
+            self.pre_act = PreAct(act = "gelu", sparse=self.sparse_relu)
 
         if self.use_MLP_shift:
             if self.activation in ["full_glu"]:

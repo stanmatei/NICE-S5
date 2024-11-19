@@ -38,6 +38,7 @@ class StackedEncoderModel(nn.Module):
     use_gating: bool = False
     adaptive_thr: bool = False
     beta: float = 0.75
+    sparse_relu: bool = False
 
     def setup(self):
         """
@@ -61,7 +62,8 @@ class StackedEncoderModel(nn.Module):
                 thr=self.thr,
                 use_gating=self.use_gating,
                 adaptive_thr=self.adaptive_thr,
-                beta=self.beta
+                beta=self.beta,
+                sparse_relu=self.sparse_relu
             )
             for _ in range(self.n_layers)
         ]
@@ -144,6 +146,7 @@ class ClassificationModel(nn.Module):
     use_gating: bool = False
     adaptive_thr: bool = False
     beta: float = 0.75
+    sparse_relu: bool = False
 
     def setup(self):
         """
@@ -166,7 +169,8 @@ class ClassificationModel(nn.Module):
                             thr=self.thr,
                             use_gating=self.use_gating,
                             adaptive_thr=self.adaptive_thr,
-                            beta=self.beta
+                            beta=self.beta,
+                            sparse_relu=self.sparse_relu
                                         )
         self.decoder = nn.Dense(self.d_output)
 
@@ -288,6 +292,7 @@ class RetrievalModel(nn.Module):
     use_gating: bool = False
     adaptive_thr: bool = False
     beta: float = 0.75
+    sparse_relu: bool = False
 
     def setup(self):
         """
@@ -320,7 +325,8 @@ class RetrievalModel(nn.Module):
                             thr=self.thr, 
                             use_gating=self.use_gating, 
                             adaptive_thr = self.adaptive_thr,
-                            beta=self.beta
+                            beta=self.beta,
+                            sparse_relu=self.sparse_relu
                                         )
         BatchRetrievalDecoder = nn.vmap(
             RetrievalDecoder,
@@ -380,6 +386,7 @@ class ShiftAddRegressionModel(nn.Module):
     use_gating: bool = False
     adaptive_thr: bool = False
     beta: float = 0.75
+    sparse_relu: bool = False
 
     def setup(self):
         """
@@ -402,7 +409,8 @@ class ShiftAddRegressionModel(nn.Module):
                             thr=self.thr,
                             use_gating=self.use_gating, 
                             adaptive_thr=self.adaptive_thr,
-                            beta=self.beta
+                            beta=self.beta,
+                            sparse_relu=self.sparse_relu
         )
         # NOTE: nn.Dense calls dot_general(activation, weights)
         self.decoder = nn.Dense(self.d_output)
